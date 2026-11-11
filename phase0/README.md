@@ -87,15 +87,45 @@ Wenn alles ausgewertet ist, kann `/tmp/phase0` auf ELSA gelöscht werden (macht 
 
 ## D. Schnittrechner
 
-**Fragen** (Michl oder ein Kollege beantwortet sie):
+### D1. Erhebung je Schnittrechner (automatisch, nur lesend)
 
-1. Welche Rechner kommen in Frage? Je Rechner: Windows-Version, CPU, RAM, freier Platz auf dem Laufwerk für Aufnahmen.
-2. Ist Docker Desktop schon installiert? Läuft WSL2? (In PowerShell: `wsl --status` und `docker version`.)
-3. Docker Desktop ist für kleine Firmen kostenlos; die aktuellen Lizenzbedingungen bitte einmal gegen die Firmengröße prüfen.
-4. Womit werden Aufnahmen nach `Aufnahmen` auf ELSA kopiert: Explorer, TeraCopy, robocopy, anderes?
-5. Wie binden die Schnittplätze die Proxys ein (DaVinci Resolve Free oder Studio, Version; über den Ordner `Proxies/`)?
+Auf jedem Rechner, der in Frage kommt, **PowerShell** öffnen (Startmenü → „PowerShell“, normale Rechte genügen) und den ganzen Block einfügen. Er ändert nichts, installiert nichts und schreibt nur die Datei `schnittrechner_erhebung.txt` auf den Desktop, die danach im Editor aufgeht. Die Datei an Michl schicken.
 
-**Messung Altersgrenze** (Plan 0.11): Eine große Videodatei (mehrere GB) so nach `Aufnahmen` kopieren, wie es üblich ist, in einen Testordner. Während des Kopierens auf ELSA:
+```powershell
+$out = "$env:USERPROFILE\Desktop\schnittrechner_erhebung.txt"
+$env:WSL_UTF8 = "1"
+& {
+"=== Rechner"; $env:COMPUTERNAME; Get-Date -Format "yyyy-MM-dd HH:mm"
+"=== Windows"; Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture | Format-List | Out-String
+"=== CPU"; Get-CimInstance Win32_Processor | Select-Object Name, NumberOfCores, NumberOfLogicalProcessors, VirtualizationFirmwareEnabled | Format-List | Out-String
+"=== RAM GB"; [math]::Round((Get-CimInstance Win32_ComputerSystem).TotalPhysicalMemory / 1GB, 1)
+"=== Hypervisor aktiv"; (Get-CimInstance Win32_ComputerSystem).HypervisorPresent
+"=== Grafik"; Get-CimInstance Win32_VideoController | Select-Object Name, DriverVersion | Format-List | Out-String
+"=== Laufwerke"; Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -in 3,4 } | Select-Object DeviceID, VolumeName, FileSystem, @{n='GroesseGB';e={[math]::Round($_.Size/1GB)}}, @{n='FreiGB';e={[math]::Round($_.FreeSpace/1GB)}}, ProviderName | Format-Table -AutoSize | Out-String -Width 200
+"=== Netzlaufwerke"; Get-SmbMapping -ErrorAction SilentlyContinue | Select-Object LocalPath, RemotePath, Status | Format-Table -AutoSize | Out-String -Width 200
+"=== Netzwerk"; Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, LinkSpeed | Format-Table -AutoSize | Out-String -Width 200
+"=== WSL"; wsl --status 2>&1 | Out-String; wsl --list --verbose 2>&1 | Out-String
+"=== Docker"; docker version 2>&1 | Out-String; docker image ls 2>&1 | Out-String
+"=== Python und ffmpeg im Pfad"; Get-Command python, py, ffmpeg -ErrorAction SilentlyContinue | Select-Object Name, Source | Format-Table -AutoSize | Out-String -Width 200
+"=== Programme"; Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -match 'DaVinci|Resolve|TeraCopy|FastCopy|FreeFileSync|Docker|Python|Syncthing|Premiere' } | Select-Object DisplayName, DisplayVersion | Sort-Object DisplayName | Format-Table -AutoSize | Out-String -Width 200
+} *>&1 | Out-File -FilePath $out -Encoding utf8
+notepad $out
+```
+
+Daraus ergeben sich: Windows-Version, CPU, RAM, Grafikkarte, freier Platz je Laufwerk, verbundene ELSA-Freigaben, Netzwerkgeschwindigkeit, ob WSL2 und Docker Desktop da sind, ob Python oder ffmpeg installiert ist (ein Pfad mit `WindowsApps` ist nur der Platzhalter des Microsoft Store, kein echtes Python), installierte Version von DaVinci Resolve und vorhandene Kopierprogramme.
+
+Fehlermeldungen in der Datei wie „wsl ist nicht installiert“ oder „docker wird nicht erkannt“ sind kein Problem, sondern die Antwort.
+
+### D2. Fragen, die kein Befehl beantwortet
+
+1. Welche Rechner kommen für den Proxy-Betrieb in Frage?
+2. Womit werden Aufnahmen nach `Aufnahmen` auf ELSA kopiert: Explorer, TeraCopy, robocopy, anderes?
+3. Wie binden die Schnittplätze die Proxys in Resolve ein (über den Ordner `Proxies/`, von Hand verknüpft, automatisch)? Free oder Studio steht in D1 meist schon im Programmnamen.
+4. Docker Desktop ist für kleine Firmen kostenlos; die aktuellen Lizenzbedingungen bitte einmal gegen die Firmengröße prüfen (Michl).
+
+### D3. Messung Altersgrenze (Plan 0.11)
+
+Eine große Videodatei (mehrere GB) so nach `Aufnahmen` kopieren, wie es üblich ist, in einen Testordner. Während des Kopierens auf ELSA:
 
 ```bash
 while true; do stat -c '%y  %z  %s  %n' /mnt/Aufnahme_mirror/Aufnahmen/<Testordner>/<Datei>; sleep 10; done
@@ -103,4 +133,25 @@ while true; do stat -c '%y  %z  %s  %n' /mnt/Aufnahme_mirror/Aufnahmen/<Testordn
 
 Mit Strg+C beenden, wenn das Kopieren fertig ist, und die Ausgabe aufheben. Die erste Zeitspalte ist die Änderungszeit, die zweite die Statusänderungszeit. Interessant ist, ob die Änderungszeit während des Kopierens die aktuelle Uhrzeit zeigt oder schon die alte Zeit des Originals. Wenn mehrere Kopierprogramme genutzt werden, je eines messen.
 
-**Testlauf Docker unter Windows** (Plan 0.12): kommt, sobald Docker Desktop läuft. Den Befehl schreibe ich dann passend zum Rechner.
+### D4. Testlauf Docker unter Windows (Plan 0.12)
+
+Nur auf einem Rechner, auf dem Docker Desktop schon läuft (siehe D1), und erst nach Rücksprache mit Michl: Der erste Befehl lädt das Image (rund 730 MB) auf den Rechner.
+
+Vorbereitung: einen Ordner `D:\Proxytest` anlegen (anderes Laufwerk geht auch, dann `$ordner` anpassen) und eine typische Aufnahme hineinkopieren, z. B. eine FX3-Datei von einigen GB, umbenannt in `test.MP4`.
+
+```powershell
+$img = "linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697"
+$ordner = "D:\Proxytest"
+docker pull $img
+$groesse = (Get-Item "$ordner\test.MP4").Length
+$lesen = Measure-Command { docker run --rm -v "${ordner}:/arbeit:ro" --entrypoint bash $img -c 'cat /arbeit/test.MP4 > /dev/null' }
+$werkzeuge = docker run --rm -v "${ordner}:/arbeit" --entrypoint bash $img -c 'bash --version | head -1; find /arbeit -maxdepth 1 -type f -iname "*.mp4"; touch /arbeit/schreibtest && rm /arbeit/schreibtest && echo schreiben ok' 2>&1 | Out-String
+$proxy = Measure-Command { docker run --rm -v "${ordner}:/arbeit" $img -nostdin -hide_banner -loglevel error -i /arbeit/test.MP4 -vf scale=-1:540 -pix_fmt yuv420p -map 0:v -map 0:a? -c:v libx264 -c:a aac -profile:v main -level 2.1 -preset veryfast -tune fastdecode -crf 21 -threads 4 -x264opts keyint=75 -f mov /arbeit/test_proxy.mov.teil }
+$dauer = docker run --rm -v "${ordner}:/arbeit:ro" --entrypoint ffprobe $img -v error -show_entries format=duration -of csv=p=0 /arbeit/test.MP4
+"Datei: {0:N0} MB, Laufzeit {1} s" -f ($groesse/1MB), $dauer | Tee-Object -FilePath "$ordner\ergebnis.txt"
+"Lesen aus dem Container: {0:N1} s = {1:N0} MB/s" -f $lesen.TotalSeconds, (($groesse/1MB)/$lesen.TotalSeconds) | Tee-Object -FilePath "$ordner\ergebnis.txt" -Append
+"Proxy erzeugen: {0:N1} s" -f $proxy.TotalSeconds | Tee-Object -FilePath "$ordner\ergebnis.txt" -Append
+$werkzeuge | Tee-Object -FilePath "$ordner\ergebnis.txt" -Append
+```
+
+Ergebnis steht danach in `D:\Proxytest\ergebnis.txt`. Die Datei `test_proxy.mov.teil` ist der erzeugte Probeproxy, sie kann danach gelöscht werden. Der Ordner `D:\Proxytest` ist nur zum Testen da; bitte keine echten Projektordner nehmen.
