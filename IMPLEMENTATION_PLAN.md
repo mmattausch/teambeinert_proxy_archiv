@@ -49,8 +49,21 @@ Was an der Kodierung auffällt (Abschnitt 8), wird nur geprüft und dokumentiert
 | Vorhandenes Ziel | wie v4: beide da → nichts; eines fehlt → kopieren; keines → umrechnen | `Proxies/<Name>.mov` da → nichts | geprüft nach M3 → `vorhanden_ok`, sonst `Fehler` (Fortsetzen eines Auftrags, M5) |
 | Prüfung nach dem Umrechnen (M3) | Laufzeit, Videospuren, Höhe 540, Summe Tonkanäle, Größe | wie links | Laufzeit, Videospuren, **gleiche Auflösung wie Original**, Summe Tonkanäle, Größe |
 | Protokoll (M4) | `Proxy_Output/_protokolle/<Datum>.csv` | Zusammenfassung in der Konsole (Datei: offen) | `h264_archiv/_protokolle/<Auftrag>.csv` |
-| Parallelität | 3 wie heute | 3, einstellbar | Empfehlung: 1 (heute eine Datei je Aufruf); einstellbar |
+| Parallelität | 3 wie heute | 3, einstellbar | 3 wie heute (`xargs -P 3`), einstellbar |
 | `--nur-pruefen` (M6) | vorhandene Proxys gegen Original | – | Bestand in `h264_archiv` gegen Original, Pflicht vor dem ersten Löschen |
+
+**Aufrufe heute** (Angabe Michl, 11.11.2026):
+
+- Proxy, TrueNAS-Cronjob (entspricht der Zeile in der IT-Doku):
+  `/usr/bin/find /mnt/Aufnahme_mirror/Aufnahmen/ -type f ! -name ".*" \( -iname "*.mp4" -o … -iname "*.mts" \) -print0 | /usr/bin/xargs -0 -n 1 -P 3 …/proxy_conv_docker_v4.sh > …/log_proxy_Elsa.log 2>&1`
+- Archiv, von Hand je Ordner, im Vordergrund mit `sudo`:
+  `sudo /usr/bin/find /mnt/Aufnahme_mirror/Aufnahmen/<Projekt>/<Unterordner>/ -type f ! -name ".*" \( … \) -print0 | /usr/bin/xargs -0 -n 1 -P 3 /mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh`
+
+Folgerungen für den Entwurf:
+- **Der Einzeldatei-Aufruf muss parallel laufen können.** `archiv_h264.sh <Datei>` bleibt erhalten (Änderungsliste M5) und wird heute dreifach parallel gestartet. Die Sperre gegen doppelte Läufe (M13) gilt deshalb im Einzeldatei-Aufruf **je Zieldatei**, nicht für das ganze Programm. Die Sperre für den ganzen Lauf gilt nur bei `--auftrag` und beim Proxy-Lauf. Einzelaufrufe schreiben ins Protokoll `_protokolle/einzel_<Datum>.csv`; jede Zeile wird unter einer Sperre auf die CSV angehängt, damit sich parallele Aufrufe nicht ins Wort fallen.
+- **Rückgabewerte bleiben mit `xargs` brauchbar:** Endet ein Einzelaufruf mit 1 oder 2, meldet `xargs` am Ende 123. Damit sieht man nach dem heutigen Aufruf erstmals, ob etwas schiefging.
+- **Der heutige Archiv-Aufruf läuft im Vordergrund unter `sudo`.** Endet die SSH-Sitzung, bricht er ab (Stolperstein `log_subcmds`, siehe Arbeitsregeln); mit dem heutigen Skript bleibt dann eine halbe Archiv-Fassung als „existiert“ liegen. Mit M1 und M12 ist das künftig harmlos. Für lange Ordner trotzdem `systemd-run` nutzen; die Anleitung bekommt dafür einen fertigen Befehl, der den heutigen `find | xargs`-Aufruf in eine Unit packt.
+- Für den Proxy ersetzt v5 die Cron-Zeile durch einen einzigen Aufruf, der selbst sucht (Abschnitt 3). **Der Einzeldatei-Aufruf `proxy_v5.sh <Datei>` bleibt zusätzlich erhalten** (Michl, 11.11.2026), z. B. für einen Ordner von Hand per `find | xargs` wie beim Archiv; gleiche Regeln: Sperre je Zieldatei, Protokoll `einzel_<Datum>.csv`, Rückgabewerte 0/1/2. Ausschlüsse, Bestandsabgleich (beide Kopien) und Prüfung wie im Lauf; nur die Altersgrenze entfällt, weil die Datei bewusst übergeben wird.
 
 **Ablauf bei einer zeitkritischen Produktion:** Aufnahmen auf den Schnittrechner kopieren, `proxy <Ordner>` starten, Schnitt vorbereiten. Danach den Ordner wie üblich nach `Aufnahmen` kopieren. Abends findet ELSA den lokalen Proxy, kopiert ihn über eine Teildatei in die zentrale Ablage, rechnet nicht neu. Das ist der Fall „nur `Proxies/` vorhanden“ aus v4, ohne zusätzliche Prüfung.
 
@@ -107,7 +120,7 @@ Empfehlung: Weg A in Phase 0 prüfen; trägt er, ist er der einfachere. Entschei
 | M10 Profilkennung | `proxy_h264_540_v1` | `archiv_h264_crf18_v1` | ja |
 | M11 kein `eval` | ja | ja | ja |
 | M12 Abbruch mit `trap`, `docker stop` | ja | ja | ja |
-| M13 `flock` | `Proxy_Output/_protokolle/.sperre` | `h264_archiv/_protokolle/.sperre` | ja |
+| M13 `flock` | Lauf: `Proxy_Output/_protokolle/.sperre`; Einzeldatei: je Zieldatei | `--auftrag`: `h264_archiv/_protokolle/.sperre`; Einzeldatei: je Zieldatei | ja |
 | M14 Platz | `Mirror_2x8TB` und `Aufnahme_mirror` | `Aufnahme_mirror` (84 %) | ja |
 | M15 `systemd-run`, Zeitstempel, Zusammenfassung | ja (Cron weiter über TrueNAS) | ja | ja |
 | M16 Änderungszeit übernehmen | nein (v4 lässt das Umrechnungsdatum) | **offen** (Empfehlung der Änderungsliste) | Schalter je Profil |
@@ -144,7 +157,7 @@ Für jedes Profil gegen sein heutiges Skript:
 
 | # | Abfrage | Wozu |
 |---|---|---|
-| 0.1 | `cat /mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh`, als `archiv_h264.IST-STAND.sh.txt` nach `docs/referenz/` im Wissens-Repo; wie wird es heute aufgerufen? | Ist-Stand Archiv, Vergleich mit v4 |
+| 0.1 | `cat /mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh`, als `archiv_h264.IST-STAND.sh.txt` nach `docs/referenz/` im Wissens-Repo (Aufruf heute: erledigt, Abschnitt 2) | Ist-Stand Archiv, Vergleich mit v4 |
 | 0.2 | `sha256sum` von v4 gegen die Kopie im Wissens-Repo; Cronjob-Zeile ablesen; `ls -l /mnt/Mirror_2x8TB/Proxy_Output/*.sh` | Ist-Stand Proxy, weitere Varianten |
 | 0.3 | `docker image inspect linuxserver/ffmpeg --format '{{index .RepoDigests 0}}'`, `docker run --rm linuxserver/ffmpeg -version \| head -3` (ohne vorher zu pullen) | Digest für M8 |
 | 0.4 | `docker run --rm --entrypoint bash linuxserver/ffmpeg -c 'bash --version; find --version; flock --version'` | Weg A |
@@ -217,7 +230,8 @@ Nur Proxy:
 Nur Archiv:
 15. **Auftragsdatei mit mehreren Dateien:** alle Zeilen werden abgearbeitet (Standardeingabe, M5); Leerzeilen und `#`-Zeilen ignoriert.
 16. **Fortsetzen:** zweiter Lauf desselben Auftrags → fertige Dateien `vorhanden_ok`, Rest umgerechnet; CSV angehängt, letzte Zeile je Quelle gilt.
-17. **CSV-Format:** UTF-8 ohne BOM, LF, Semikolon, Quoting nach RFC 4180 bei Namen mit `;`, `"`, Leerzeichen.
+17. **Heutiger Aufruf** (gilt ebenso für `proxy_v5.sh <Datei>`): `find … -print0 | xargs -0 -n 1 -P 3 archiv_h264.sh` über einen Testordner: alle Dateien `ok`, keine Datei doppelt umgerechnet, CSV vollständig und ohne verschränkte Zeilen; dieselbe Datei zweimal gleichzeitig gestartet → einer rechnet, der andere meldet „belegt“.
+18. **CSV-Format:** UTF-8 ohne BOM, LF, Semikolon, Quoting nach RFC 4180 bei Namen mit `;`, `"`, Leerzeichen.
 
 ---
 
@@ -267,6 +281,7 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 - Proxy-Skript auch am Windows-Schnittrechner.
 - ffmpeg überall im Docker-Container, kein eigener Build; Prozesspriorität unverändert.
 - Proxy- und Archivskript aus einer Codebasis.
+- Beide Programme behalten den Einzeldatei-Aufruf (parallel per `xargs` nutzbar).
 
 **Noch offen:**
 - Sprache (Abschnitt 3), Entscheidung nach Phase 0.

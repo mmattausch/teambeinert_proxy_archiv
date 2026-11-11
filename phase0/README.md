@@ -35,9 +35,7 @@ ls -l /tmp/phase0
 
 Falls `zfs get` andere Dataset-Namen braucht: `zfs list -o name,mountpoint | grep -E 'Aufnahmen|Proxy_Output'` zeigt die richtigen.
 
-Dazu bitte von Hand notieren:
-- Die Zeile des Proxy-Cronjobs aus der TrueNAS-Oberfläche (System → Erweitert → Cron-Aufträge), mit Benutzer.
-- **Wie wird `archiv_h264.sh` heute aufgerufen?** (Befehlszeile, von wem, wie oft)
+Von Hand notiert (11.11.2026, erledigt): Cron-Zeile des Proxys und Aufruf von `archiv_h264.sh` stehen im Plan, Abschnitt 2. Offen ist nur noch, unter welchem Benutzer der Cronjob läuft.
 
 ---
 
