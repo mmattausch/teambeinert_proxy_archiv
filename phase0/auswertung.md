@@ -6,7 +6,6 @@ Einträge aus `Aufnahmen/00_PRIVAT` wurden aus den lokalen Listen entfernt und n
 
 ## Noch offen
 
-- Befund 8 am echten Proxy bestätigen (Befehl unten).
 - Schnittrechner (README, Abschnitt D): Fragen, Messung Altersgrenze, Testlauf Docker unter Windows.
 
 ## Ergebnisse
@@ -48,13 +47,19 @@ Einträge aus `Aufnahmen/00_PRIVAT` wurden aus den lokalen Listen entfernt und n
 
 v4 setzt bei Dateien mit Ton `-map 0:v`. Das nimmt **alle** Videospuren. Bei den Überwachungskameras wird die 176-Pixel-Spur also mit `scale=-1:540` hochgerechnet und als zweite Videospur in den Proxy geschrieben. Bei Dateien ohne Ton (Drohnen) bleibt `video_map` leer; ffmpeg wählt selbst eine Videospur, das Vorschaubild fällt weg.
 
-Nach Code gefolgert, am echten Proxy noch nicht gesehen. Prüfen mit einem vorhandenen Proxy einer `DSCF*.MP4`:
+**Bestätigt am 11.11.2026** an `…/Ueberwachungskamera/CAM1/101MEDIA/DSCF0180.MP4` (ffprobe auf ELSA):
 
-```bash
-docker run --rm --pull never -v /mnt/Aufnahme_mirror/Aufnahmen:/mnt/Aufnahme_mirror/Aufnahmen:ro --entrypoint ffprobe linuxserver/ffmpeg -v error -show_entries stream=index,codec_type,width,height -of compact "<Pfad zu Proxies/DSCFxxxx.mov>"
-```
+| | Spuren | Laufzeit |
+|---|---|---|
+| Original | Video 1920×1080, Video 320×176, AAC | 10,31 s |
+| Proxy `Proxies/DSCF0180.mov` | Video 960×540, **Video 982×540**, AAC, 2 Datenspuren | 10,32 s |
+| Proxy zentral `DSCF0180.MP4.mov` | identisch mit dem lokalen | 10,32 s |
 
-Für v5.0 bleibt es wie in v4 (Gleichheit). Folge für die Prüfung M3: Die Zahl der Videospuren im Proxy ist nicht immer 1. Geprüft wird deshalb „gleich wie die Zuordnung von v4 sie ergibt“, nicht „gleich wie im Original“.
+- Die Vorschauspur wird von 320×176 auf 982×540 hochgerechnet und als zweite Videospur geschrieben.
+- Je Videospur eine Timecode-Datenspur (`tmcd`, entsteht durch `-timecode` im mov-Container).
+- Laufzeit weicht um 0,01 s ab, weit innerhalb der Toleranz von M3.
+
+Für v5.0 bleibt es wie in v4 (Gleichheit). Folge für die Prüfung M3: Die Zahl der Videospuren im Proxy ist nicht immer 1. Geprüft wird deshalb „gleich wie die Zuordnung von v4 sie ergibt“, nicht „gleich wie im Original“. Datenspuren zählen nicht mit.
 
 ## `archiv_h264.sh` im Ist-Stand
 

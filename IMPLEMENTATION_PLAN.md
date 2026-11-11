@@ -153,7 +153,7 @@ Für jedes Profil gegen sein heutiges Skript:
 
 ## 7. Phase 0: Daten aufnehmen (nur lesend, vor dem Code)
 
-**Stand 11.11.2026:** ELSA-Teil erledigt, auch die Ist-Fassung von `archiv_h264.sh`; Auswertung in `phase0/auswertung.md`. Offen: Befund 8 am echten Proxy, Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
+**Stand 11.11.2026:** ELSA-Teil erledigt, auch die Ist-Fassung von `archiv_h264.sh`; Auswertung in `phase0/auswertung.md`. Offen: Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
 
 **ELSA**
 
@@ -191,7 +191,7 @@ Aus v4 (am Code belegt); für `archiv_h264.sh` nach 0.1 zu ergänzen. Die Änder
 5. **Gleicher Name mit verschiedenen Videoendungen im selben Ordner** (`A001.mp4`, `A001.mxf`): Nach dem Code von v4 bilden beide denselben lokalen Proxy-Namen `Proxies/A001.mov`, zentral verschiedene; die zweite Datei bekommt den Proxy der ersten. **Gemessen 11.11.2026: kommt in `Aufnahmen` nicht vor** (`phase0/auswertung.md`). Das Archiv ist nicht betroffen, es behält die Endung im Namen.
 6. **Dateien direkt im Wurzelordner `Aufnahmen`:** In v4 entsteht ein falscher zentraler Pfad. **Gemessen: keine Videodateien im Wurzelordner.**
 7. **Timecode** aus der Textausgabe von `ffmpeg -i`, erster Treffer. In der Stichprobe (100 Dateien) stimmt er überall mit dem Timecode der Datei überein.
-8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1080p + 176p) bekommen so vermutlich eine zweite, hochgerechnete Videospur im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. Am echten Proxy noch zu bestätigen. Für M3 heißt das: Die erwartete Zahl der Videospuren ergibt sich aus der Zuordnung von v4, nicht aus dem Original.
+8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1920×1080 + 320×176) bekommen so eine zweite, hochgerechnete Videospur (982×540) im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. **Am echten Proxy bestätigt (11.11.2026, lokal und zentral gleich).** Außerdem trägt der Proxy je Videospur eine Timecode-Datenspur (`-timecode` mit mov). Für M3 heißt das: Die erwartete Zahl der Videospuren ergibt sich aus der Zuordnung von v4, nicht aus dem Original; Datenspuren werden nicht mitgezählt. Beim Archiv entsteht die zweite Spur nach dem Code ebenso, dort ohne Skalierung (320×176); nicht gemessen.
 
 9. **`00_` an beliebiger Stelle (nur Archiv, Änderungsliste M7):** Das heutige `archiv_h264.sh` überspringt jeden Pfad mit `00_`. Gemessen: 77 Videodateien (171 GB) außerhalb von `00_*`-Ordnern, fast alle Telefonvideos `VID_JJJJMMTT_hhmmss_…`. Sie würden heute still nicht umgerechnet. Wird mit M7 behoben (bewusste Änderung, keine Kodierung betroffen).
 
