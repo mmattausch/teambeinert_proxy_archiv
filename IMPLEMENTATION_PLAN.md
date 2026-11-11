@@ -5,7 +5,7 @@ Stand: 11.11.2026 (fünfte Fassung) · Strang PX · Maßnahmen M-01 und M-39 · 
 Grundlage:
 - `../teambeinert_IT_wissen/docs/themen/proxy-archiv-kontext.md`, `proxy-und-archivskript.md`, `docs/entscheidungen.md`, `docs/arbeitsregeln.md`
 - Proxy-Skript v4 im Ist-Stand: `../teambeinert_IT_wissen/docs/referenz/proxy_conv_docker_v4.IST-STAND.sh.txt`
-- Archivskript im Ist-Stand: `/mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh` auf ELSA. **Liegt mir noch nicht vor**, bekannt ist es nur aus der Beschreibung in der Änderungsliste (Phase 0, 0.1).
+- Archivskript im Ist-Stand: `../teambeinert_IT_wissen/docs/referenz/archiv_h264.IST-STAND.sh.txt` (vom 09.01.2026, geholt 11.11.2026). Vergleich mit v4 in `phase0/auswertung.md`: Timecode und Ton-Logik sind identisch.
 - „Archivskript: nötige Änderungen“ vom 11.11.2026: `docs/Archivskript_Aenderungen.md`, im Folgenden **Änderungsliste**, Kennungen M1 bis M16.
 - Anforderungen von Michl vom 11.11.2026: Betrieb des Proxy-Skripts auch am Windows-Schnittrechner; ffmpeg überall im Container; `R:` ohne eigenen Programmaufwand; **Proxy- und Archivskript aus einer Codebasis**.
 
@@ -153,7 +153,7 @@ Für jedes Profil gegen sein heutiges Skript:
 
 ## 7. Phase 0: Daten aufnehmen (nur lesend, vor dem Code)
 
-**Stand 11.11.2026:** ELSA-Teil erledigt, Auswertung in `phase0/auswertung.md`. Offen: Ist-Fassung von `archiv_h264.sh` (Datei war nicht lesbar), Befund 8 am echten Proxy, Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
+**Stand 11.11.2026:** ELSA-Teil erledigt, auch die Ist-Fassung von `archiv_h264.sh`; Auswertung in `phase0/auswertung.md`. Offen: Befund 8 am echten Proxy, Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
 
 **ELSA**
 
@@ -192,6 +192,10 @@ Aus v4 (am Code belegt); für `archiv_h264.sh` nach 0.1 zu ergänzen. Die Änder
 6. **Dateien direkt im Wurzelordner `Aufnahmen`:** In v4 entsteht ein falscher zentraler Pfad. **Gemessen: keine Videodateien im Wurzelordner.**
 7. **Timecode** aus der Textausgabe von `ffmpeg -i`, erster Treffer. In der Stichprobe (100 Dateien) stimmt er überall mit dem Timecode der Datei überein.
 8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1080p + 176p) bekommen so vermutlich eine zweite, hochgerechnete Videospur im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. Am echten Proxy noch zu bestätigen. Für M3 heißt das: Die erwartete Zahl der Videospuren ergibt sich aus der Zuordnung von v4, nicht aus dem Original.
+
+9. **`00_` an beliebiger Stelle (nur Archiv, Änderungsliste M7):** Das heutige `archiv_h264.sh` überspringt jeden Pfad mit `00_`. Gemessen: 77 Videodateien (171 GB) außerhalb von `00_*`-Ordnern, fast alle Telefonvideos `VID_JJJJMMTT_hhmmss_…`. Sie würden heute still nicht umgerechnet. Wird mit M7 behoben (bewusste Änderung, keine Kodierung betroffen).
+
+Befunde 1, 2, 3, 7 und 8 gelten für das Archivskript genauso, die Ton- und Timecode-Logik ist dort identisch.
 
 Mehr als 8 Kanäle oder 3/5/7 Kanäle kamen in der Stichprobe nicht vor (Befunde 1 und 2); typisch sind 1 Stereospur oder 4 Monospuren (Sony FX3).
 

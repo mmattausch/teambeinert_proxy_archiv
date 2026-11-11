@@ -6,7 +6,7 @@ Einträge aus `Aufnahmen/00_PRIVAT` wurden aus den lokalen Listen entfernt und n
 
 ## Noch offen
 
-- **`archiv_h264.sh` fehlt.** Die Kopie in `/tmp/phase0` gehört root und ist für `scp` nicht lesbar (Quelle hat `rwxrwx---`, `cp` als root übernimmt das ohne Leserecht für andere). Auf ELSA als root: `chmod 644 /tmp/phase0/archiv_h264.IST-STAND.sh.txt`, dann nur diese Datei holen.
+- Befund 8 am echten Proxy bestätigen (Befehl unten).
 - Schnittrechner (README, Abschnitt D): Fragen, Messung Altersgrenze, Testlauf Docker unter Windows.
 
 ## Ergebnisse
@@ -55,6 +55,27 @@ docker run --rm --pull never -v /mnt/Aufnahme_mirror/Aufnahmen:/mnt/Aufnahme_mir
 ```
 
 Für v5.0 bleibt es wie in v4 (Gleichheit). Folge für die Prüfung M3: Die Zahl der Videospuren im Proxy ist nicht immer 1. Geprüft wird deshalb „gleich wie die Zuordnung von v4 sie ergibt“, nicht „gleich wie im Original“.
+
+## `archiv_h264.sh` im Ist-Stand
+
+Datei vom 09.01.2026, 7.338 Byte, `truenas_admin:Firma`, `rwxrwx---`. Ist-Fassung im Wissens-Repo unter `docs/referenz/archiv_h264.IST-STAND.sh.txt`.
+
+**Das Archivskript ist eine Abwandlung von v4.** Zeile für Zeile verglichen:
+
+| Teil | gegenüber v4 |
+|---|---|
+| Timecode (ffmpeg-Ausgabe, erster Treffer) | **identisch** |
+| Ton-Logik (bis 8 Kanäle `-map 0:a`/`-map 0:v`, sonst Monospuren, `-map 0:0 -map 0:1`) | **identisch**, einschließlich der Befunde 1, 2, 3 und 8 |
+| Ausschluss `01_` (erster Ordner) und `/Proxies/` | identisch |
+| Ausschluss `00_` | **anders:** `case "$1" in *"00_"*)` trifft `00_` an beliebiger Stelle (Änderungsliste M7) |
+| Ziel | `00_to_Backup/h264_archiv/<Pfad>/<Name>.<ext>.mov`, nur ein Ziel, keine `Proxies/`-Kopie |
+| Vorhandenes Ziel | existiert → Ende, ohne Prüfung |
+| `mkdir -m 777`, `docker run -i -v /mnt:/mnt` ohne feste Version, `eval`, `exit 0` | identisch |
+| ffmpeg | `-pix_fmt yuv420p10le -timecode … -c:v libx264 -c:a aac -preset veryfast -tune fastdecode -crf 18 -threads 4 -x264opts keyint=75`; **ohne** `-vf scale`, **ohne** `-profile:v main -level 2.1` |
+
+**Folge:** Der gemeinsame Kern ist am Code bestätigt. Proxy und Archiv unterscheiden sich nur in den ffmpeg-Argumenten, im Ziel, in der Behandlung vorhandener Ziele und in der `00_`-Regel. Die Reihenfolge der Argumente ist bei beiden gleich (`-i`, [`-vf`], `-pix_fmt`, `-timecode`, Filter, Video-Zuordnung, Ton-Zuordnung, Codecs, [Profil/Level], Preset …), sodass ein Profil nur die Platzhalter füllt.
+
+**Befund 9 (`00_` an beliebiger Stelle) gemessen:** 77 Videodateien mit zusammen **171 GB** in `Aufnahmen` enthalten `00_` im Pfad, ohne in einem `00_*`-Ordner zu liegen. Fast alle sind Telefonvideos nach dem Muster `VID_JJJJMMTT_hhmmss_…` (z. B. Uhrzeit `…1200_…`). Das heutige Archivskript überspringt sie still; nach Löschen der Originale wären sie weder umgerechnet noch auf Band. M7 behebt das; im Protokoll erscheinen sie künftig als umgerechnet.
 
 ## Stand der Sprachfrage
 
