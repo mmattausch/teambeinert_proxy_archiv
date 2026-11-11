@@ -54,7 +54,7 @@ Was an der Kodierung auffällt (Abschnitt 8), wird nur geprüft und dokumentiert
 
 **Aufrufe heute** (Angabe Michl, 11.11.2026):
 
-- Proxy, TrueNAS-Cronjob (entspricht der Zeile in der IT-Doku):
+- Proxy, TrueNAS-Cronjob als root (entspricht der Zeile in der IT-Doku):
   `/usr/bin/find /mnt/Aufnahme_mirror/Aufnahmen/ -type f ! -name ".*" \( -iname "*.mp4" -o … -iname "*.mts" \) -print0 | /usr/bin/xargs -0 -n 1 -P 3 …/proxy_conv_docker_v4.sh > …/log_proxy_Elsa.log 2>&1`
 - Archiv, von Hand je Ordner, im Vordergrund mit `sudo`:
   `sudo /usr/bin/find /mnt/Aufnahme_mirror/Aufnahmen/<Projekt>/<Unterordner>/ -type f ! -name ".*" \( … \) -print0 | /usr/bin/xargs -0 -n 1 -P 3 /mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh`
