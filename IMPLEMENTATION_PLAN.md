@@ -153,6 +153,8 @@ Für jedes Profil gegen sein heutiges Skript:
 
 ## 7. Phase 0: Daten aufnehmen (nur lesend, vor dem Code)
 
+**Stand 11.11.2026:** ELSA-Teil erledigt, Auswertung in `phase0/auswertung.md`. Offen: Ist-Fassung von `archiv_h264.sh` (Datei war nicht lesbar), Befund 8 am echten Proxy, Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
+
 **ELSA**
 
 | # | Abfrage | Wozu |
@@ -186,9 +188,12 @@ Aus v4 (am Code belegt); für `archiv_h264.sh` nach 0.1 zu ergänzen. Die Änder
 2. **Mehr als 8 Kanäle:** `-map 0:0 -map 0:1` nimmt Spur 0 und 1 unabhängig von ihrer Art; der Filter greift immer auf `[0:a]`; bei gemischten Spuren hängt das Ergebnis von der Reihenfolge ab. Die Prüfung der Kanalsumme (M3) kann solche Dateien erstmals als `Fehler` melden. Beim Proxy gewollt sichtbar; beim Archiv verhindert sie zu Recht das Löschen.
 3. **Ohne Tonspur** bleibt `video_map` leer; ffmpeg wählt selbst.
 4. Proxy: **`-level 2.1`** passt rechnerisch nicht zu 540p; **`scale=-1:540`** kann ungerade Breiten liefern. Beide: kein Deinterlacing, Log-Material nicht getaggt. Archiv: `fastdecode`, 10 Bit 4:2:0 und AAC sind bewusst getragene Kompromisse (Änderungsliste 5.1–5.3).
-5. **Gleicher Name mit verschiedenen Videoendungen im selben Ordner** (`A001.mp4`, `A001.mxf`): Nach dem Code von v4 bilden beide denselben lokalen Proxy-Namen `Proxies/A001.mov`, zentral verschiedene; die zweite Datei bekommt den Proxy der ersten. Theoretischer Fall, Vorkommen nicht belegt (0.7). Das Archiv ist nicht betroffen, es behält die Endung im Namen.
-6. **Dateien direkt im Wurzelordner `Aufnahmen`:** In v4 entsteht ein falscher zentraler Pfad. Vorkommen: 0.7.
-7. **Timecode** aus der Textausgabe von `ffmpeg -i`, erster Treffer; kann bei mehreren Timecodes von DaVinci abweichen.
+5. **Gleicher Name mit verschiedenen Videoendungen im selben Ordner** (`A001.mp4`, `A001.mxf`): Nach dem Code von v4 bilden beide denselben lokalen Proxy-Namen `Proxies/A001.mov`, zentral verschiedene; die zweite Datei bekommt den Proxy der ersten. **Gemessen 11.11.2026: kommt in `Aufnahmen` nicht vor** (`phase0/auswertung.md`). Das Archiv ist nicht betroffen, es behält die Endung im Namen.
+6. **Dateien direkt im Wurzelordner `Aufnahmen`:** In v4 entsteht ein falscher zentraler Pfad. **Gemessen: keine Videodateien im Wurzelordner.**
+7. **Timecode** aus der Textausgabe von `ffmpeg -i`, erster Treffer. In der Stichprobe (100 Dateien) stimmt er überall mit dem Timecode der Datei überein.
+8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1080p + 176p) bekommen so vermutlich eine zweite, hochgerechnete Videospur im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. Am echten Proxy noch zu bestätigen. Für M3 heißt das: Die erwartete Zahl der Videospuren ergibt sich aus der Zuordnung von v4, nicht aus dem Original.
+
+Mehr als 8 Kanäle oder 3/5/7 Kanäle kamen in der Stichprobe nicht vor (Befunde 1 und 2); typisch sind 1 Stereospur oder 4 Monospuren (Sony FX3).
 
 ---
 
