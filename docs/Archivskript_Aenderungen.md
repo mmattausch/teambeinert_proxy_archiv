@@ -58,8 +58,8 @@ Mit ffprobe Original und Teildatei vergleichen:
 | Prüfung | Bedingung für `ok` |
 |---|---|
 | Laufzeit (`format=duration`) | Abweichung höchstens 1,0 Sekunden (einstellbar, Variable `TOLERANZ_SEKUNDEN`) |
-| Videospur | genau so viele Videospuren wie im Original nach der jeweiligen Zuordnung (heute meist 1) |
-| Auflösung | Breite und Höhe wie im Original, weil die Archiv-Fassung nicht skaliert |
+| Videospur | mindestens eine Videospur; die Anzahl wird nicht geprüft (geändert 12.11.2026, Michl: mehrere Videospuren sind kein Sonderfall) |
+| Auflösung | Breite und Höhe der **ersten** Videospur wie die der ersten Videospur des Originals, weil die Archiv-Fassung nicht skaliert |
 | Tonspuren | Anzahl der Tonkanäle in der Summe wie im Original. Bei mehr als 8 Kanälen sind es Monospuren, die Summe der Kanäle muss trotzdem passen |
 | Größe | größer als 0 |
 

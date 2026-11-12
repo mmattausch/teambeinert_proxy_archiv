@@ -6,7 +6,7 @@ Grundlage:
 - `../teambeinert_IT_wissen/docs/themen/proxy-archiv-kontext.md`, `proxy-und-archivskript.md`, `docs/entscheidungen.md`, `docs/arbeitsregeln.md`
 - Proxy-Skript v4 im Ist-Stand: `../teambeinert_IT_wissen/docs/referenz/proxy_conv_docker_v4.IST-STAND.sh.txt`
 - Archivskript im Ist-Stand: `../teambeinert_IT_wissen/docs/referenz/archiv_h264.IST-STAND.sh.txt` (vom 09.01.2026, geholt 11.11.2026). Vergleich mit v4 in `phase0/auswertung.md`: Timecode und Ton-Logik sind identisch.
-- „Archivskript: nötige Änderungen“ vom 11.11.2026: `docs/Archivskript_Aenderungen.md`, im Folgenden **Änderungsliste**, Kennungen M1 bis M16.
+- „Archivskript: nötige Änderungen“ vom 11.11.2026 (von Michl, M3 angepasst am 12.11.2026): `docs/Archivskript_Aenderungen.md`, im Folgenden **Änderungsliste**, Kennungen M1 bis M16.
 - Anforderungen von Michl vom 11.11.2026: Betrieb des Proxy-Skripts auch am Windows-Schnittrechner; ffmpeg überall im Container; `R:` ohne eigenen Programmaufwand; **Proxy- und Archivskript aus einer Codebasis**.
 
 Alles unter „Empfehlung“ ist ein Vorschlag von Claude und noch nicht beschlossen.
@@ -47,7 +47,7 @@ Was an der Kodierung auffällt (Abschnitt 8), wird nur geprüft und dokumentiert
 | Ausschlüsse | `Aufnahmen/00_*`, `Aufnahmen/01_*` (erster Ordner), `Proxies/`, versteckte Dateien | `Proxies/`, versteckte Dateien | wie Proxy auf ELSA, übersprungene Dateien mit Grund ins Protokoll (M7) |
 | Altersgrenze | 120 Minuten | aus | aus (das Werkzeug wählt die Dateien) |
 | Vorhandenes Ziel | wie v4: beide da → nichts; eines fehlt → kopieren; keines → umrechnen | `Proxies/<Name>.mov` da → nichts | geprüft nach M3 → `vorhanden_ok`, sonst `Fehler` (Fortsetzen eines Auftrags, M5) |
-| Prüfung nach dem Umrechnen (M3) | Laufzeit, Videospuren, Höhe 540, Summe Tonkanäle, Größe | wie links | Laufzeit, Videospuren, **gleiche Auflösung wie Original**, Summe Tonkanäle, Größe |
+| Prüfung nach dem Umrechnen (M3) | Laufzeit, erste Videospur Höhe 540, Summe Tonkanäle, Größe | wie links | Laufzeit, erste Videospur **gleiche Auflösung wie im Original**, Summe Tonkanäle, Größe |
 | Protokoll (M4) | `Proxy_Output/_protokolle/<Datum>.csv` | Zusammenfassung in der Konsole (Datei: offen) | `h264_archiv/_protokolle/<Auftrag>.csv` |
 | Parallelität | 3 wie heute | 3, einstellbar | 3 wie heute (`xargs -P 3`), einstellbar |
 | `--nur-pruefen` (M6) | vorhandene Proxys gegen Original | – | Bestand in `h264_archiv` gegen Original, Pflicht vor dem ersten Löschen |
@@ -146,7 +146,7 @@ Für jedes Profil gegen sein heutiges Skript:
 1. ffmpeg-Argumente Zeile für Zeile übertragen, mit allen Eigenheiten.
 2. Erst `archiv_h264.sh` gegen v4 vergleichen: Was ist wirklich gleich (Timecode, Ton-Logik, Endungen, Ausschlüsse)? Nur das wandert in den Kern.
 3. Je Testdatei: alte `echo`-Zeile gegen die neue Argumentliste. Abweichen dürfen nur `-nostdin`, `-f mov`, `.teil`, `--user`, `--name`, fehlendes `-i` bei `docker run` und die Einbindungen.
-4. Bild und Ton: `ffmpeg -i <datei> -map 0 -f framemd5 -` für alte und neue Ausgabe, gleiches Image. Erwartet: gleich.
+4. Bild und Ton: `ffmpeg -i <datei> -map 0 -f framemd5 -` für alte und neue Ausgabe, gleiches Image. Erwartet: gleich. Grundlage ist der Testkorpus `Aufnahmen/2025-03-04_PROXY` (Abschnitt 10).
 5. Proxy am Schnittrechner gegen Proxy auf ELSA, gleiches Image, `framemd5`. Erwartet: gleich.
 
 ---
@@ -191,7 +191,7 @@ Aus v4 (am Code belegt); für `archiv_h264.sh` nach 0.1 zu ergänzen. Die Änder
 5. **Gleicher Name mit verschiedenen Videoendungen im selben Ordner** (`A001.mp4`, `A001.mxf`): Nach dem Code von v4 bilden beide denselben lokalen Proxy-Namen `Proxies/A001.mov`, zentral verschiedene; die zweite Datei bekommt den Proxy der ersten. **Gemessen 11.11.2026: kommt in `Aufnahmen` nicht vor** (`phase0/auswertung.md`). Das Archiv ist nicht betroffen, es behält die Endung im Namen.
 6. **Dateien direkt im Wurzelordner `Aufnahmen`:** In v4 entsteht ein falscher zentraler Pfad. **Gemessen: keine Videodateien im Wurzelordner.**
 7. **Timecode** aus der Textausgabe von `ffmpeg -i`, erster Treffer. In der Stichprobe (100 Dateien) stimmt er überall mit dem Timecode der Datei überein.
-8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1920×1080 + 320×176) bekommen so eine zweite, hochgerechnete Videospur (982×540) im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. **Am echten Proxy bestätigt (11.11.2026, lokal und zentral gleich).** Außerdem trägt der Proxy je Videospur eine Timecode-Datenspur (`-timecode` mit mov). Für M3 heißt das: Die erwartete Zahl der Videospuren ergibt sich aus der Zuordnung von v4, nicht aus dem Original; Datenspuren werden nicht mitgezählt. Beim Archiv entsteht die zweite Spur nach dem Code ebenso, dort ohne Skalierung (320×176); nicht gemessen.
+8. **Zweite Videospur** (neu aus Phase 0): Bei Dateien mit Ton nimmt `-map 0:v` alle Videospuren. Überwachungskameras (`DSCF*.MP4`, 1920×1080 + 320×176) bekommen so eine zweite, hochgerechnete Videospur (982×540) im Proxy; Drohnen ohne Ton (Video + MJPEG-Vorschaubild) nicht, dort wählt ffmpeg selbst. **Am echten Proxy bestätigt (11.11.2026, lokal und zentral gleich).** Außerdem trägt der Proxy je Videospur eine Timecode-Datenspur (`-timecode` mit mov). **Kein Sonderfall (Michl, 12.11.2026):** Die Proxys der Überwachungskameras werden nicht genutzt und spielen in QuickTime; das genügt. Der Code behandelt zwei Videospuren nicht gesondert. Die Prüfung M3 bezieht sich deshalb nur auf die **erste Videospur** (Proxy: Höhe 540; Archiv: Auflösung wie die erste Videospur des Originals); die Anzahl der Video- und Datenspuren wird nicht geprüft.
 
 9. **`00_` an beliebiger Stelle (nur Archiv, Änderungsliste M7):** Das heutige `archiv_h264.sh` überspringt jeden Pfad mit `00_`. Gemessen: 77 Videodateien (171 GB) außerhalb von `00_*`-Ordnern, fast alle Telefonvideos `VID_JJJJMMTT_hhmmss_…`. Sie würden heute still nicht umgerechnet. Wird mit M7 behoben (bewusste Änderung, keine Kodierung betroffen).
 
@@ -216,7 +216,37 @@ Schritt 3 kann früher kommen, wenn das Werkzeug „Bandarchiv“ früher lösch
 
 ## 10. Tests
 
-Auf dem Mac mit Docker und demselben Digest, Testdateien per ffmpeg erzeugt, nichts Echtes im Repository. Windows-Teil mit Docker Desktop. Danach je eine kleine Testmenge echter Dateien auf ELSA unter einem Projektnamen in `Aufnahmen` (nicht unter `00_`).
+### Testkorpus `Aufnahmen/2025-03-04_PROXY` (Vorgabe Michl, 12.11.2026)
+
+Echte Aufnahmen aller Kamerasysteme, die im Einsatz sind; Grundlage der bisherigen Tests des Proxy-Skripts. **Jede Änderung wird gegen diesen Ordner getestet.** Laut Dateiliste vom 11.11.2026: 63 Originale, 22,2 GB, davon
+
+| Ordner | Inhalt |
+|---|---|
+| `FX3`, `a7iv` | Sony XAVC HS/S/S-I, H.264/H.265, 4:2:0/4:2:2, 8/10 Bit, 4-Kanal-Ton |
+| `FS7` | MPEG HD 422, XAVC-I/-L (MXF), ProRes 422/HQ |
+| `GH5` | AVCHD 50i und 50p (MTS), MOV/MP4 8/10 Bit, All-I, HEVC, LPCM |
+| `Sumo` | ProRes 422/HQ/LT, **1080i 59,94**, 1080p, UHD 50p/59,94p |
+| `Hyperdeck` | ProRes 422 LT mit **16 Tonkanälen**, H.265 4K |
+| `URSA` | DNxHD 220x, ProRes 422/444/XQ |
+| `shogun` | DNxHR HQ, ProRes 422 |
+| `Mavic3`, `Avatar`, `GoPro` | DJI ProRes LT, H.264/H.265 in MOV/MP4, 5K, 2,7K 120p, 5312×2988 Zeitraffer |
+| `Ordner mit Leerzeichen` | Leerzeichen, Umlaute und Sonderzeichen im Pfad |
+
+Damit sind Interlaced, mehr als 8 Kanäle (Befund 2), 10 Bit, 4:2:2, ProRes 444/XQ und Sonderzeichen mit echten Dateien abgedeckt. Nicht abgedeckt sind die bösartigen Namen aus Test 2 (`$(…)`, Backticks usw.); dafür bleiben erzeugte Testdateien.
+
+**Auffällig, vor dem Testen klären (Phase 0, `phase0/korpus_ffprobe.sh`):** Die vorhandenen Proxys entstanden alle am 09.11.2025, also **vor** v4 (09.01.2026); sie sind keine v4-Referenz. Und die beiden Dateien in `Ordner mit Leerzeichen` sind gleich groß wie `shogun/Shogun_DNxHR_HQ.MOV` (vermutlich Kopien), ihre Proxys aber nur 0,13 bzw. 0,06 MB statt 0,72 MB: möglicherweise abgebrochene Proxys (Schwachstelle b).
+
+**Gleichheitstest gegen den Korpus** (Abschnitt 6, Empfehlung):
+1. **Referenz erzeugen:** v4 und `archiv_h264.sh` unverändert laufen lassen, nur die Pfadvariablen (`searchpath`, `basedir`) auf ein Testverzeichnis umgestellt, damit nichts im echten `Aufnahmen` oder `Proxy_Output` entsteht. Beim Proxy liegt die lokale Kopie neben dem Original; dafür wird der Korpus einmal in das Testverzeichnis kopiert (22 GB).
+2. **v5 und neues Archiv** über denselben Korpus, Ziel ebenfalls im Testverzeichnis, Quelle nur lesend.
+3. **Vergleich je Datei, automatisch:** übergebene ffmpeg-Argumente; `framemd5` von Bild und Ton; `ffprobe -show_streams`. Ergebnis als Tabelle (Datei, gleich/ungleich, Grund). Das Testverzeichnis legt Michl fest (Platz, möglichst ohne Replikation).
+4. Derselbe Vergleich später für den Proxy vom Schnittrechner gegen den von ELSA.
+
+Daraus wird ein Test-Skript im Repository (`tests/korpus_vergleich.sh`), das bei jeder Änderung erneut läuft.
+
+### Weitere Tests
+
+Erzeugte Testdateien auf dem Mac mit Docker und demselben Digest (für Fälle, die der Korpus nicht hat), nichts Echtes im Repository. Windows-Teil mit Docker Desktop.
 
 Für beide Profile:
 1. **Gleichheit** nach Abschnitt 6.

@@ -154,3 +154,33 @@ $werkzeuge | Tee-Object -FilePath "$ordner\ergebnis.txt" -Append
 ```
 
 Ergebnis steht danach in `D:\Proxytest\ergebnis.txt`. Die Datei `test_proxy.mov.teil` ist der erzeugte Probeproxy, sie kann danach gelöscht werden. Der Ordner `D:\Proxytest` ist nur zum Testen da; bitte keine echten Projektordner nehmen.
+
+---
+
+## E. Testordner `Aufnahmen/2025-03-04_PROXY` (ELSA, nur lesend)
+
+Untersucht je Originaldatei des Testordners Original, lokalen und zentralen Proxy (Spuren, Laufzeit, Größe, Datum). Dauert wenige Minuten. Schreibt nur `/tmp/phase0/korpus_ffprobe.txt`.
+
+Vom Mac aus das Skript nach ELSA kopieren:
+
+```bash
+scp ~/code/teambeinert_proxy_archiv/phase0/korpus_ffprobe.sh mmattausch@192.168.23.8:/tmp/korpus_ffprobe.sh
+```
+
+Auf ELSA als root starten:
+
+```bash
+systemd-run --unit=phase0-korpus /usr/bin/bash /tmp/korpus_ffprobe.sh
+```
+
+Fertig, wenn die letzte Zeile mit „Ende:“ beginnt:
+
+```bash
+tail -3 /tmp/phase0/korpus_ffprobe.txt
+```
+
+Ergebnis auf den Mac holen:
+
+```bash
+scp mmattausch@192.168.23.8:/tmp/phase0/korpus_ffprobe.txt ~/code/teambeinert_proxy_archiv/phase0/ergebnisse/
+```

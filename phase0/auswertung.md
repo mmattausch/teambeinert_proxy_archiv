@@ -109,3 +109,8 @@ Datei vom 09.01.2026, 7.338 Byte, `truenas_admin:Firma`, `rwxrwx---`. Ist-Fassun
 ## Stand der Sprachfrage
 
 Beide Wege sind auf ELSA möglich. Für Weg A (Bash, am Schnittrechner im Container) fehlt nur noch der Testlauf mit Docker Desktop unter Windows (Geschwindigkeit des Laufwerkszugriffs).
+
+## Festlegungen vom 12.11.2026 (Michl)
+
+- **Zweite Videospur (Befund 8) ist kein Sonderfall.** Die Proxys der Überwachungskameras werden nicht genutzt und spielen in QuickTime. Die Prüfung M3 schaut nur auf die erste Videospur; die Anzahl der Spuren wird nicht geprüft.
+- **Testkorpus:** `Aufnahmen/2025-03-04_PROXY` (63 Originale, 22,2 GB, alle Kamerasysteme) ist Grundlage aller Tests und des Gleichheitsvergleichs. Details im Plan, Abschnitt 10. Untersuchung des Ordners: `README.md`, Abschnitt E.
