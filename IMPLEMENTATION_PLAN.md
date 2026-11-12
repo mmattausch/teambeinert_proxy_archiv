@@ -234,7 +234,7 @@ Echte Aufnahmen aller Kamerasysteme, die im Einsatz sind; Grundlage der bisherig
 
 Damit sind Interlaced, mehr als 8 Kanäle (Befund 2), 10 Bit, 4:2:2, ProRes 444/XQ und Sonderzeichen mit echten Dateien abgedeckt. Nicht abgedeckt sind die bösartigen Namen aus Test 2 (`$(…)`, Backticks usw.); dafür bleiben erzeugte Testdateien.
 
-**Auffällig, vor dem Testen klären (Phase 0, `phase0/korpus_ffprobe.sh`):** Die vorhandenen Proxys entstanden alle am 09.11.2025, also **vor** v4 (09.01.2026); sie sind keine v4-Referenz. Und die beiden Dateien in `Ordner mit Leerzeichen` sind gleich groß wie `shogun/Shogun_DNxHR_HQ.MOV` (vermutlich Kopien), ihre Proxys aber nur 0,13 bzw. 0,06 MB statt 0,72 MB: möglicherweise abgebrochene Proxys (Schwachstelle b).
+**Ergebnis der Untersuchung (12.11.2026, `phase0/auswertung.md`):** Die vorhandenen Proxys stammen aus zwei Läufen vor v4 (zentral März 2025, lokal 09.11.2025) und sind keine v4-Referenz. Die beiden lokalen Proxys in `Ordner mit Leerzeichen` sind **abgebrochen** (1,70 s bzw. 0,83 s statt 6,62 s), die zentralen vollständig. Der Korpus enthält damit einen echten Fall für Schwachstelle (b) und für `--nur-pruefen`.
 
 **Gleichheitstest gegen den Korpus** (Abschnitt 6, Empfehlung):
 1. **Referenz erzeugen:** v4 und `archiv_h264.sh` unverändert laufen lassen, nur die Pfadvariablen (`searchpath`, `basedir`) auf ein Testverzeichnis umgestellt, damit nichts im echten `Aufnahmen` oder `Proxy_Output` entsteht. Beim Proxy liegt die lokale Kopie neben dem Original; dafür wird der Korpus einmal in das Testverzeichnis kopiert (22 GB).

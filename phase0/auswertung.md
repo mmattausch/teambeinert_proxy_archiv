@@ -114,3 +114,27 @@ Beide Wege sind auf ELSA möglich. Für Weg A (Bash, am Schnittrechner im Contai
 
 - **Zweite Videospur (Befund 8) ist kein Sonderfall.** Die Proxys der Überwachungskameras werden nicht genutzt und spielen in QuickTime. Die Prüfung M3 schaut nur auf die erste Videospur; die Anzahl der Spuren wird nicht geprüft.
 - **Testkorpus:** `Aufnahmen/2025-03-04_PROXY` (63 Originale, 22,2 GB, alle Kamerasysteme) ist Grundlage aller Tests und des Gleichheitsvergleichs. Details im Plan, Abschnitt 10. Untersuchung des Ordners: `README.md`, Abschnitt E.
+
+## Testkorpus `2025-03-04_PROXY` (ffprobe auf ELSA, 12.11.2026, 19:54–19:57)
+
+Alle 63 Originale haben einen lokalen und einen zentralen Proxy. Gelesen wurde alles fehlerfrei.
+
+**Zwei abgebrochene Proxys bestätigt (Schwachstelle b in der Praxis):**
+
+| Datei | Original | lokaler Proxy `Proxies/` | zentraler Proxy |
+|---|---|---|---|
+| `Ordner mit Leerzeichen/leerzeichen drin.MOV` | 6,62 s | **1,70 s**, 132 kB, 09.11.2025 21:13 | 6,62 s, 717 kB, 31.03.2025 |
+| `Ordner mit Leerzeichen/sonderzeichen drin _Ö_â_Kopie.MOV` | 6,62 s | **0,83 s**, 56 kB, 09.11.2025 21:13 | 6,62 s, 717 kB, 31.03.2025 |
+
+Genau der lokale Proxy ist abgeschnitten, also der, den die Schnittplätze per „Link Proxy“ nutzen. Weil beide Kopien vorhanden sind, lässt v4 sie seit einem Jahr unverändert; ein neuer Lauf repariert das nie. Beide entstanden um 21:13, alle anderen lokalen Proxys derselben Nacht zwischen 21:18 und 21:22: Vermutlich wurde ein Lauf abgebrochen und danach neu gestartet. v5 findet solche Fälle mit `--nur-pruefen`.
+
+**Lokale und zentrale Proxys stammen aus verschiedenen Läufen.** Bei allen 63 Dateien sind die beiden Kopien verschieden groß (also keine Kopien voneinander, wie es v4 erzeugen würde). Die zentralen entstanden im März 2025 (Testphase), die lokalen am 09.11.2025. Beides liegt vor v4 (09.01.2026). **Keiner der vorhandenen Proxys taugt als v4-Referenz**; die Referenz wird für den Gleichheitstest neu erzeugt (Plan, Abschnitt 10).
+
+**Sonst:**
+- Laufzeit: Alle übrigen Proxys weichen höchstens 0,01 s vom Original ab.
+- Alle Proxys: H.264 Main, Level 2.1, Höhe 540; Breite 960, beim Mavic 3 5K (5120×2700) 1024.
+- **16 Tonkanäle** (HyperDeck ProRes LT): Proxy hat 16 Monospuren, Summe passt. Der Fall „mehr als 8 Kanäle“ funktioniert mit dieser Datei.
+- **Interlaced** (GH5 50i, Sumo 1080i): Proxys sind nicht deinterlaced (Befund 4), wie erwartet.
+- Timecode: 16 der Proxys tragen `00:00:00:00` (Originale ohne Timecode, z. B. Drohnen, GoPro, URSA).
+- `FX3/…C4058_1.mov` ist selbst schon ein 960×540-Proxy (liegt als Original im Korpus); harmlos, ergibt einen Proxy vom Proxy.
+- Hinweis zur Auswertung: Bei MPEG-TS (`.MTS`) listet ffprobe Spuren doppelt (Programmansicht). Das Test-Skript muss Spuren deshalb über `-show_streams` zählen, nicht über die kompakte Gesamtausgabe.
