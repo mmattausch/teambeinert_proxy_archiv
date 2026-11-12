@@ -153,7 +153,7 @@ Für jedes Profil gegen sein heutiges Skript:
 
 ## 7. Phase 0: Daten aufnehmen (nur lesend, vor dem Code)
 
-**Stand 11.11.2026:** ELSA-Teil erledigt, auch die Ist-Fassung von `archiv_h264.sh`; Auswertung in `phase0/auswertung.md`. Offen: Schnittrechner (0.10–0.13). Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
+**Stand 11.11.2026:** ELSA-Teil erledigt, auch die Ist-Fassung von `archiv_h264.sh`; Auswertung in `phase0/auswertung.md`. Schnittrechner VFX-WORKSTATION erhoben (12.11.2026): Virtualisierung im BIOS aus, kein WSL, kein Docker; vor jedem Docker-Test sind BIOS-Einstellung, WSL2 und Docker Desktop nötig. Offen: weitere Rechner, Fragen 0.11 und 0.13, Testlauf 0.12. Festgeschrieben für M8: `linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697` (ffmpeg 8.0). Bash, GNU find und flock sind im Image vorhanden, Python 3.11.9 auf dem Host.
 
 **ELSA**
 

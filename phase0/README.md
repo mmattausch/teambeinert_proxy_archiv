@@ -93,7 +93,6 @@ Auf jedem Rechner, der in Frage kommt, **PowerShell** öffnen (Startmenü → �
 
 ```powershell
 $out = "$env:USERPROFILE\Desktop\schnittrechner_erhebung.txt"
-$env:WSL_UTF8 = "1"
 & {
 "=== Rechner"; $env:COMPUTERNAME; Get-Date -Format "yyyy-MM-dd HH:mm"
 "=== Windows"; Get-CimInstance Win32_OperatingSystem | Select-Object Caption, Version, BuildNumber, OSArchitecture | Format-List | Out-String
@@ -104,7 +103,7 @@ $env:WSL_UTF8 = "1"
 "=== Laufwerke"; Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -in 3,4 } | Select-Object DeviceID, VolumeName, FileSystem, @{n='GroesseGB';e={[math]::Round($_.Size/1GB)}}, @{n='FreiGB';e={[math]::Round($_.FreeSpace/1GB)}}, ProviderName | Format-Table -AutoSize | Out-String -Width 200
 "=== Netzlaufwerke"; Get-SmbMapping -ErrorAction SilentlyContinue | Select-Object LocalPath, RemotePath, Status | Format-Table -AutoSize | Out-String -Width 200
 "=== Netzwerk"; Get-NetAdapter | Where-Object Status -eq 'Up' | Select-Object Name, InterfaceDescription, LinkSpeed | Format-Table -AutoSize | Out-String -Width 200
-"=== WSL"; wsl --status 2>&1 | Out-String; wsl --list --verbose 2>&1 | Out-String
+"=== WSL"; Get-AppxPackage -Name MicrosoftCorporationII.WindowsSubsystemForLinux -ErrorAction SilentlyContinue | Select-Object Name, Version | Format-List | Out-String; Get-ChildItem 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Lxss' -ErrorAction SilentlyContinue | ForEach-Object { $_.GetValue('DistributionName') }
 "=== Docker"; docker version 2>&1 | Out-String; docker image ls 2>&1 | Out-String
 "=== Python und ffmpeg im Pfad"; Get-Command python, py, ffmpeg -ErrorAction SilentlyContinue | Select-Object Name, Source | Format-Table -AutoSize | Out-String -Width 200
 "=== Programme"; Get-ItemProperty 'HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*', 'HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*' -ErrorAction SilentlyContinue | Where-Object { $_.DisplayName -match 'DaVinci|Resolve|TeraCopy|FastCopy|FreeFileSync|Docker|Python|Syncthing|Premiere' } | Select-Object DisplayName, DisplayVersion | Sort-Object DisplayName | Format-Table -AutoSize | Out-String -Width 200
@@ -114,7 +113,9 @@ notepad $out
 
 Daraus ergeben sich: Windows-Version, CPU, RAM, Grafikkarte, freier Platz je Laufwerk, verbundene ELSA-Freigaben, Netzwerkgeschwindigkeit, ob WSL2 und Docker Desktop da sind, ob Python oder ffmpeg installiert ist (ein Pfad mit `WindowsApps` ist nur der Platzhalter des Microsoft Store, kein echtes Python), installierte Version von DaVinci Resolve und vorhandene Kopierprogramme.
 
-Fehlermeldungen in der Datei wie „wsl ist nicht installiert“ oder „docker wird nicht erkannt“ sind kein Problem, sondern die Antwort.
+Fehlermeldungen in der Datei wie „docker wird nicht erkannt“ sind kein Problem, sondern die Antwort.
+
+Korrigiert 12.11.2026: Die erste Fassung rief `wsl --list --verbose` auf. Ist WSL nicht installiert, bietet Windows dabei mit „beliebige Taste drücken“ die Installation an (auf VFX-WORKSTATION nach 60 s ohne Eingabe abgebrochen). Die WSL-Abfrage liest jetzt nur noch Paketliste und Registry.
 
 ### D2. Fragen, die kein Befehl beantwortet
 

@@ -82,6 +82,25 @@ Datei vom 09.01.2026, 7.338 Byte, `truenas_admin:Firma`, `rwxrwx---`. Ist-Fassun
 
 **Befund 9 (`00_` an beliebiger Stelle) gemessen:** 77 Videodateien mit zusammen **171 GB** in `Aufnahmen` enthalten `00_` im Pfad, ohne in einem `00_*`-Ordner zu liegen. Fast alle sind Telefonvideos nach dem Muster `VID_JJJJMMTT_hhmmss_…` (z. B. Uhrzeit `…1200_…`). Das heutige Archivskript überspringt sie still; nach Löschen der Originale wären sie weder umgerechnet noch auf Band. M7 behebt das; im Protokoll erscheinen sie künftig als umgerechnet.
 
+## Schnittrechner VFX-WORKSTATION (Erhebung 12.11.2026, 08:34)
+
+| Thema | Befund | Folge |
+|---|---|---|
+| System | Windows 11 Pro 25H2 (Build 26200), AMD Ryzen 9 5900X (12 Kerne/24 Threads), 64 GB RAM, NVIDIA RTX 3090 | Leistung reicht für Proxys mit Software-Kodierung. |
+| **Virtualisierung** | `VirtualizationFirmwareEnabled: False`, `HypervisorPresent: False` | **Laut Abfrage ist die Virtualisierung im BIOS (AMD SVM) aus.** Docker Desktop läuft so nicht. Vor Docker: SVM im BIOS einschalten, Neustart. |
+| WSL | nicht installiert | Docker Desktop braucht WSL2: Installation mit Administratorrechten und Neustart. |
+| Docker | nicht installiert | – |
+| Python | 3.14.4 installiert (Aufruf über `py`); `python.exe` im Pfad ist nur der Platzhalter des Microsoft Store | Für Weg B wäre Python schon da. |
+| ffmpeg | `C:\Program Files\ffmpeg\ffmpeg.exe`, Version unbekannt | Wird nicht genutzt (Grundsatz: ffmpeg nur im Container). Nur zur Kenntnis. |
+| Laufwerke | `C:` 887 GB frei, `D:` („Stuff“) 1.084 GB frei | Genug Platz für Aufnahmen einer Produktion. |
+| ELSA-Freigaben | `T:` Bilderarchiv, `V:` Projekte, `W:` Schnittplatz_Arbeitsver, `X:` Proxy_Output, `Y:` Aufnahmen, `Z:` Software_und_Tools | `Software_und_Tools` ist verbunden, also geeignet für den zentralen Ablageort von Skript und `.bat`. |
+| Netzwerk | 2,5 GbE (Realtek) | Kopieren nach ELSA theoretisch knapp 300 MB/s. |
+| Programme | DaVinci Resolve 20.0 und 21.0, Resolve Control Panels, Premiere Pro 2025, **TeraCopy 4.0.5**, Syncthing | Ob Resolve Studio oder Free, verrät der Programmname nicht. TeraCopy ist da: für die Messung der Altersgrenze (D3) mit TeraCopy und Explorer messen. |
+
+**Fehler in der ersten Fassung der Anleitung:** `wsl --list --verbose` bietet bei fehlendem WSL die Installation an („beliebige Taste drücken“). Hier ist nach 60 s ohne Eingabe nichts passiert. Die Abfrage ist korrigiert (nur Paketliste und Registry).
+
+**Folge für die Sprachfrage:** Docker am Schnittrechner ist mehr als eine Installation: BIOS-Einstellung, WSL2 und Docker Desktop, jeweils mit Administratorrechten und Neustarts. Das gilt für Weg A und Weg B gleichermaßen, weil ffmpeg in beiden Wegen im Container läuft. D4 (Testlauf) kann erst danach stattfinden.
+
 ## Stand der Sprachfrage
 
 Beide Wege sind auf ELSA möglich. Für Weg A (Bash, am Schnittrechner im Container) fehlt nur noch der Testlauf mit Docker Desktop unter Windows (Geschwindigkeit des Laufwerkszugriffs).
