@@ -173,7 +173,7 @@ Für jedes Profil gegen sein heutiges Skript:
 
 | # | Frage | Wozu |
 |---|---|---|
-| 0.10 | Welche Rechner, Windows-Version, CPU, RAM; Docker Desktop vorhanden? Lizenzbedingungen für die Firma prüfen | Einrichtung |
+| 0.10 | Welche Rechner, Windows-Version, CPU, RAM; Docker Desktop vorhanden? | Einrichtung |
 | 0.11 | Eine große Datei wie üblich nach `Aufnahmen` kopieren und währenddessen auf ELSA mehrmals `stat`: Ist die Änderungszeit während des Kopierens „jetzt“? | Altersgrenze |
 | 0.12 | Testdatei im Container über Docker Desktop umrechnen, Zeit messen | Weg A, Laufwerkszugriff |
 | 0.13 | Wie binden die Schnittplätze die Proxys ein (Resolve Free/Studio)? | Testfälle |

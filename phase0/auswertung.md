@@ -97,6 +97,11 @@ Datei vom 09.01.2026, 7.338 Byte, `truenas_admin:Firma`, `rwxrwx---`. Ist-Fassun
 | Netzwerk | 2,5 GbE (Realtek) | Kopieren nach ELSA theoretisch knapp 300 MB/s. |
 | Programme | DaVinci Resolve 20.0 und 21.0, Resolve Control Panels, Premiere Pro 2025, **TeraCopy 4.0.5**, Syncthing | Ob Resolve Studio oder Free, verrät der Programmname nicht. TeraCopy ist da: für die Messung der Altersgrenze (D3) mit TeraCopy und Explorer messen. |
 
+**Antworten der Kollegen (12.11.2026):**
+1. In Frage kommen möglichst **alle** Schnittrechner. → Die Einrichtung muss je Rechner wiederholbar und einfach sein; Anleitung `phase0/Schnittrechner_Einrichtung_Docker.md`.
+2. Kopiert wird mit **Explorer oder TeraCopy**. → Die Messung D3 mit beiden Programmen.
+3. Proxys werden aus dem Ordner `Proxies/` neben den Aufnahmen per **„Link Proxy“ in Resolve** eingebunden („halb-automatisch“). → Name und Ort des lokalen Proxys (`<Ordner>/Proxies/<Name>.mov`) dürfen sich nicht ändern; das ist im Plan so vorgesehen. Nach dieser Antwort greifen die Schnittplätze nicht auf die zentrale Kopie in `Proxy_Output` zu; gebraucht wird sie für den Katalog des Bandarchivs.
+
 **Fehler in der ersten Fassung der Anleitung:** `wsl --list --verbose` bietet bei fehlendem WSL die Installation an („beliebige Taste drücken“). Hier ist nach 60 s ohne Eingabe nichts passiert. Die Abfrage ist korrigiert (nur Paketliste und Registry).
 
 **Folge für die Sprachfrage:** Docker am Schnittrechner ist mehr als eine Installation: BIOS-Einstellung, WSL2 und Docker Desktop, jeweils mit Administratorrechten und Neustarts. Das gilt für Weg A und Weg B gleichermaßen, weil ffmpeg in beiden Wegen im Container läuft. D4 (Testlauf) kann erst danach stattfinden.

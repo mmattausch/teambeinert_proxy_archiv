@@ -122,8 +122,6 @@ Korrigiert 12.11.2026: Die erste Fassung rief `wsl --list --verbose` auf. Ist WS
 1. Welche Rechner kommen für den Proxy-Betrieb in Frage?
 2. Womit werden Aufnahmen nach `Aufnahmen` auf ELSA kopiert: Explorer, TeraCopy, robocopy, anderes?
 3. Wie binden die Schnittplätze die Proxys in Resolve ein (über den Ordner `Proxies/`, von Hand verknüpft, automatisch)? Free oder Studio steht in D1 meist schon im Programmnamen.
-4. Docker Desktop ist für kleine Firmen kostenlos; die aktuellen Lizenzbedingungen bitte einmal gegen die Firmengröße prüfen (Michl).
-
 ### D3. Messung Altersgrenze (Plan 0.11)
 
 Eine große Videodatei (mehrere GB) so nach `Aufnahmen` kopieren, wie es üblich ist, in einen Testordner. Während des Kopierens auf ELSA:
