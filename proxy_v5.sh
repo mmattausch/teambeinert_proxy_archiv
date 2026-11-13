@@ -448,7 +448,7 @@ viele_dateien() {
     local aktion="$1" wurzel="$2" alter="$3" rc
     export LAUF_AKTIV=1 PROTOKOLL_DATEI ZAEHLER_DATEI MODUS AUFNAHMEN ZENTRAL PROTOKOLL_ORDNER \
         FFMPEG_IMAGE CONTAINER_USER TOLERANZ_SEKUNDEN RESERVE_BYTE SPERR_ORDNER LOKAL_WURZEL
-    dateien_finden "$wurzel" "$alter" | xargs -0 -r -n 1 -P "$PARALLEL" "$SKRIPT" "--intern-$aktion"
+    dateien_finden "$wurzel" "$alter" | xargs -0 -r -n 1 -P "$PARALLEL" "$BASH" "$SKRIPT" "--intern-$aktion"
     rc=$?
     case "$rc" in
         0 | 123) return 0 ;;

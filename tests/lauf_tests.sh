@@ -34,7 +34,7 @@ pruefe() {
     fi
 }
 
-lauf() { PROXY_V5_KONF="$KONF" "$SKRIPT" "$@"; }
+lauf() { PROXY_V5_KONF="$KONF" "$BASH" "$SKRIPT" "$@"; }
 
 datei_da() { [ -f "$1" ]; }
 datei_fehlt() { [ ! -e "$1" ]; }
@@ -113,7 +113,7 @@ docker run --rm -v "$AUF:$AUF" linuxserver/ffmpeg@sha256:784db915924daf9081ab57b
     -nostdin -hide_banner -loglevel error -f lavfi -i testsrc2=size=1920x1080:rate=25:duration=1200 \
     -c:v libx264 -preset ultrafast "$lang" < /dev/null
 sleep 3   # Einbindung der Colima-VM meldet Änderungszeiten verzögert
-PROXY_V5_KONF="$KONF" "$SKRIPT" --datei "$lang" > "$DATEN/lauf5.txt" 2>&1 &
+PROXY_V5_KONF="$KONF" "$BASH" "$SKRIPT" --datei "$lang" > "$DATEN/lauf5.txt" 2>&1 &
 p=$!
 sleep 5
 kill -TERM "$p"
@@ -135,7 +135,7 @@ pruefe "vorhandener Proxy wird nicht neu gerechnet" grep -q 'vorhanden: ' "$DATE
 rm -f "$AUF/$K/Proxies/mit Leerzeichen.mov" "$ZEN/$K/mit Leerzeichen.mp4.mov"
 rm -f "$AUF/$K/Proxies/GROSS_ENDUNG.mov" "$ZEN/$K/GROSS_ENDUNG.MP4.mov"
 printf '%s\0' "$AUF/$K/mit Leerzeichen.mp4" "$AUF/$K/GROSS_ENDUNG.MP4" "$AUF/$K/mit Leerzeichen.mp4" |
-    PROXY_V5_KONF="$KONF" xargs -0 -n 1 -P 3 "$SKRIPT" --datei > "$DATEN/lauf6c.txt" 2>&1
+    PROXY_V5_KONF="$KONF" xargs -0 -n 1 -P 3 "$BASH" "$SKRIPT" --datei > "$DATEN/lauf6c.txt" 2>&1
 pruefe "parallele Einzelaufrufe: Proxy erzeugt" datei_da "$AUF/$K/Proxies/mit Leerzeichen.mov"
 pruefe "parallele Einzelaufrufe: dieselbe Datei nur einmal gerechnet" \
     test "$(grep -c 'ok: .*mit Leerzeichen.mp4' "$DATEN/lauf6c.txt")" -eq 1
@@ -153,7 +153,7 @@ echo "== 8. Schnittrechner-Modus"
 lokal="$DATEN/Schnittrechner/Dreh"
 mkdir -p "$lokal/Kamera_A"
 cp "$AUF/$K/normal.mp4" "$AUF/$K/ton_4x_mono.mov" "$lokal/Kamera_A/"
-PROXY_V5_KONF="$KONF" "$SKRIPT" --lokal "$lokal" > "$DATEN/lauf8.txt" 2>&1
+PROXY_V5_KONF="$KONF" "$BASH" "$SKRIPT" --lokal "$lokal" > "$DATEN/lauf8.txt" 2>&1
 rc=$?
 pruefe "Rückgabewert 0" gleich "$rc" 0
 pruefe "Proxy in Proxies/ neben den Aufnahmen" datei_da "$lokal/Kamera_A/Proxies/normal.mov"

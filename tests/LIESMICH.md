@@ -23,9 +23,9 @@ Testdaten liegen in `tests/daten/` (nicht im Repository).
 
 Liest den Testordner `Aufnahmen/2025-03-04_PROXY` nur. Schreibt ausschließlich nach `/mnt/Mirror_2x8TB/Proxy_Output/_test` (rund 200 MB). v4 läuft als echtes `proxy_conv_docker_v4.sh`; in einer Testkopie sind nur die drei Pfadvariablen `basedir`, `proxydest` und `proxydestfile` auf das Testverzeichnis umgestellt. Das Skript prüft vorher die Prüfsumme von v4 und dass v4 und v5 dasselbe Image nutzen.
 
-Dauer: geschätzt 30–60 Minuten (63 Dateien, jede zweimal umgerechnet). Nicht um 20:00 starten, damit es nicht mit dem Abendlauf zusammenfällt.
+Dauer: rund 20 Minuten (63 Dateien, jede zweimal umgerechnet; v4 allein brauchte am 13.11.2026 knapp 10 Minuten). Nicht um 20:00 starten, damit es nicht mit dem Abendlauf zusammenfällt.
 
-**1. Code nach ELSA kopieren** (vom Mac, ohne Testdaten):
+**1. Code nach ELSA kopieren** (vom Mac, ohne Testdaten). `/tmp` ist auf ELSA mit `noexec` eingehängt; die Skripte werden deshalb immer über `bash` gestartet, das ist so berücksichtigt.
 
 ```bash
 rsync -a --delete --exclude tests/daten --exclude phase0/ergebnisse --exclude .git ~/code/teambeinert_proxy_archiv/ mmattausch@192.168.23.8:/tmp/proxy_v5/
@@ -51,15 +51,13 @@ ssh -t mmattausch@192.168.23.8 sudo journalctl -u proxy-v5-korpus -f
 
 Fertig, wenn eine Zeile „Fertig. Gleich: …“ erscheint.
 
-**5. Ergebnis holen:**
+**5. Ergebnis holen** (Tabelle und Protokoll des Laufs; lesbar ohne sudo):
 
 ```bash
-ssh mmattausch@192.168.23.8 sudo journalctl -u proxy-v5-korpus --no-pager > ~/code/teambeinert_proxy_archiv/phase0/ergebnisse/korpus_vergleich.log
+scp 'mmattausch@192.168.23.8:/mnt/Mirror_2x8TB/Proxy_Output/_test/vergleich_*' ~/code/teambeinert_proxy_archiv/phase0/ergebnisse/
 ```
 
-```bash
-scp 'mmattausch@192.168.23.8:/mnt/Mirror_2x8TB/Proxy_Output/_test/vergleich_*.csv' ~/code/teambeinert_proxy_archiv/phase0/ergebnisse/
-```
+Den Arbeitsordner `_test/lauf_<Zeit>` bitte erst löschen, wenn die Auswertung fertig ist; dort liegen die Fehlermeldungen je Datei.
 
 Danach kann `/mnt/Mirror_2x8TB/Proxy_Output/_test` gelöscht werden (macht Michl), ebenso `/tmp/proxy_v5`.
 

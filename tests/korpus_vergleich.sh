@@ -49,6 +49,9 @@ fi
 mkdir -p "$TEST" || exit 2
 stempel="$(date '+%Y-%m-%d_%H%M%S')"
 ARBEIT="$TEST/lauf_$stempel"
+LOG="$TEST/vergleich_$stempel.log"
+# Alles zusätzlich in eine Logdatei (lesbar ohne journalctl/sudo)
+exec > >(tee -a "$LOG") 2>&1
 mkdir -p "$ARBEIT/v4/zentral" "$ARBEIT/v4/lokal" "$ARBEIT/v5/zentral" "$ARBEIT/v5/protokolle" "$ARBEIT/md5" || exit 2
 
 # v5-Einstellungen: Quelle wie auf ELSA, Ziel im Testverzeichnis
@@ -123,7 +126,7 @@ while IFS= read -r -d '' datei; do
 
     # v4
     t0=$(date +%s)
-    "$ARBEIT/v4_test.sh" "$datei" < /dev/null > "$ARBEIT/v4_ausgabe_$nr.txt" 2>&1
+    "$BASH" "$ARBEIT/v4_test.sh" "$datei" < /dev/null > "$ARBEIT/v4_ausgabe_$nr.txt" 2>&1
     v4_rc=$?
     v4_sek=$(( $(date +%s) - t0 ))
     v4_datei="$ARBEIT/v4/zentral/$rel.mov"
@@ -135,8 +138,11 @@ while IFS= read -r -d '' datei; do
     t0=$(date +%s)
     befehl=()
     while IFS= read -r -d '' x; do befehl+=("$x"); done < <(
-        BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$ARBEIT/v5.konf" "$REPO/proxy_v5.sh" --befehl "$datei" < /dev/null 2> "$ARBEIT/v5_befehl_$nr.txt")
+        BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$ARBEIT/v5.konf" "$BASH" "$REPO/proxy_v5.sh" --befehl "$datei" < /dev/null 2> "$ARBEIT/v5_befehl_$nr.txt")
     v5_rc=99
+    if [ "${#befehl[@]}" -eq 0 ]; then
+        meldung "    v5 lieferte keinen Aufruf: $(head -c 300 "$ARBEIT/v5_befehl_$nr.txt" | tr '\n' ' ')"
+    fi
     if [ "${#befehl[@]}" -gt 0 ]; then
         "${befehl[@]}" < /dev/null > "$ARBEIT/v5_ausgabe_$nr.txt" 2>&1
         v5_rc=$?

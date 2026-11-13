@@ -96,7 +96,7 @@ while IFS= read -r -d '' datei; do
         [ -e "$f" ] && mv -- "$f" "$f.vergleich_weg"
     done
     PATH="$arbeit/bin:$PATH" V4_ARGLOG="$arbeit/v4_args" "$arbeit/v4.sh" "$datei" < /dev/null > /dev/null 2>&1
-    BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$DATEN/test.konf" "$REPO/proxy_v5.sh" --befehl "$datei" < /dev/null > "$arbeit/v5_args" 2>/dev/null
+    BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$DATEN/test.konf" "$BASH" "$REPO/proxy_v5.sh" --befehl "$datei" < /dev/null > "$arbeit/v5_args" 2>/dev/null
     for f in "$lokal" "$zentral"; do
         [ -e "$f.vergleich_weg" ] && mv -- "$f.vergleich_weg" "$f"
     done
