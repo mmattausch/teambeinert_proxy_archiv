@@ -95,12 +95,9 @@ docs/                  Einrichtung ELSA, Anleitung Schnitt, Befunde zur Kodierun
 
 Ein Profil ist eine kleine, eigenständige Beschreibung: Kennung, ffmpeg-Argumente, Zielpfade, Prüfregeln. Ein neues Profil (z. B. `…_v2` nach einer bewussten Änderung) kommt dazu, ohne den Kern anzufassen; die alte Kennung bleibt für nachvollziehbare Protokolle bestehen.
 
-**Offene Grundsatzfrage: Sprache.** Beide Wege halten „ein Code, ein ffmpeg im Container“ ein.
+**Sprache: Bash (Beschluss Michl, 13.11.2026).** Auf ELSA läuft das Skript auf dem Host und startet ffmpeg/ffprobe je Aufruf im Container, wie heute. Am Schnittrechner startet `proxy.bat` das ganze Skript im Container (`docker run … --entrypoint bash linuxserver/ffmpeg@<Digest> …`); Bash, `find` und `flock` kommen aus dem Image. Das Skript erkennt an einer Umgebungsvariable, die nur `proxy.bat` setzt, ob es ffmpeg direkt aufruft (im Container) oder per `docker run` (ELSA); das ist eine Stelle im Kern, kein zweiter Code. Gemeinsamer Code als `lib/*.sh`, die alle Einstiege einbinden.
 
-- **Weg A: Bash.** Auf ELSA läuft das Skript auf dem Host und startet ffmpeg im Container, wie heute. Am Schnittrechner startet `proxy.bat` das ganze Skript im Container (`docker run … --entrypoint bash linuxserver/ffmpeg@<Digest> …`), Bash und `find` kommen aus dem Image. Kein neues Werkzeug, Stil wie bisher, Vergleich der Argumente mit v4 und `archiv_h264.sh` direkt. Voraussetzung: Bash und GNU `find` im Image, ausreichend schneller Laufwerkszugriff aus dem Container unter Windows (Phase 0). Gemeinsamer Code als `lib/*.sh`, die beide Einstiege einbinden.
-- **Weg B: Python auf dem Host**, ffmpeg im Container. Fehlerbehandlung, Parallelität, CSV und die Auswertung von ffprobe sind leichter sauber zu schreiben. Nachteil: Am Schnittrechner braucht es zusätzlich Python.
-
-Empfehlung: Weg A in Phase 0 prüfen; trägt er, ist er der einfachere. Entscheidung durch Michl nach Phase 0. Die übrigen Abschnitte gelten für beide Wege.
+**Tests auf dem Mac:** Der Mac ist arm64; Docker holt dort für denselben Digest die arm64-Fassung von ffmpeg. Für Funktionstests reicht das. Gleichheitstests (`framemd5`) laufen auf ELSA oder auf dem Mac mit `--platform linux/amd64` (emuliert, nur kurze Testdateien). Docker läuft auf dem Mac über Colima; Colima bindet nur Ordner unter dem Benutzerverzeichnis ein, deshalb liegen Testdaten in `tests/daten/` (nicht im Repository, `.gitignore`). Testdateien erzeugt `tests/erzeuge_testdateien.sh` (45 Dateien: bösartige Namen, Tonaufbauten 1–16 Kanäle und gemischt, Timecode mit und ohne Drop-Frame, MXF, MTS, zwei Videospuren, ungerade Breite, Hochformat, 10 Bit 4:2:2, defekt, ohne Video, Ausschlussordner).
 
 ---
 
@@ -205,7 +202,7 @@ Mehr als 8 Kanäle oder 3/5/7 Kanäle kamen in der Stichprobe nicht vor (Befunde
 
 **Empfehlung:** Kern von Anfang an für beide Profile bauen, aber nacheinander in Betrieb nehmen.
 
-1. **Phase 0** (Abschnitt 7), danach Entscheidung zur Sprache.
+1. **Phase 0** (Abschnitt 7). Erledigt bis auf die Schnittrechner; Sprache Bash festgelegt (13.11.2026).
 2. **Kern + Profil Proxy**, Tests, Ausrollen auf ELSA. Zuerst, weil die Lücke in v4 (Befehlsausführung als root, M-01) der dringendste Punkt ist.
 3. **Profil Archiv**, Tests nach Änderungsliste Abschnitt 7, Ausrollen. `--nur-pruefen` über den Bestand in `h264_archiv`.
 4. **Proxy am Schnittrechner**, Einrichtung und Anleitung für die Kollegen.
@@ -323,7 +320,7 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 - Beide Programme behalten den Einzeldatei-Aufruf (parallel per `xargs` nutzbar).
 
 **Noch offen:**
-- Sprache (Abschnitt 3), Entscheidung nach Phase 0.
+- ~~Sprache~~: Bash (13.11.2026).
 - M16 (Änderungszeit) beim Archiv.
 - Manifest vom Archivskript oder Prüfsummen nur vom Werkzeug.
 - Protokolldatei am Schnittrechner: ob und wo.

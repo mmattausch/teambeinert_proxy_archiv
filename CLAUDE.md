@@ -59,6 +59,7 @@ Dieses Repository gehört zum Strang `PX` (Proxy-Skript v5, Archivskript, Laufwe
 
 ## Feste Randbedingungen für den Code
 
+- Sprache: **Bash** (Beschluss 13.11.2026). Gemeinsamer Kern in `lib/*.sh`, je Programm ein Profil. Befehle immer als Bash-Array, `set -u` und `set -o pipefail`.
 - Kein `eval`, keine Befehle als zusammengesetzte Strings. Dateinamen aus `Aufnahmen` gelten als nicht vertrauenswürdige Eingabe.
 - `Aufnahmen/00_*` und `Aufnahmen/01_*` sowie alles unter `Proxies/` werden übersprungen. Diese Regel nicht ändern (Sammelordner `01_zum_Band` des Bandarchivs).
 - Keine Pakete auf dem TrueNAS-Host installieren.
