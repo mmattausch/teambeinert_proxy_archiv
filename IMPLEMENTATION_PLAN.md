@@ -326,3 +326,27 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 - Protokolldatei am Schnittrechner: ob und wo.
 - Reihenfolge Proxy/Archiv im Betrieb (Abschnitt 9), mit Strang BK abzustimmen.
 - Platz in `Aufnahme_mirror` (84 %): Archiv-Fassungen liegen dort zusätzlich zu den Originalen, bis das Band geprüft ist.
+
+---
+
+## 14. Stand der Umsetzung (13.11.2026)
+
+**Code:** `lib/kern.sh` (gemeinsamer Kern), `lib/proxy_profil.sh` (ffmpeg-Argumente, Timecode, Ton-Zuordnung aus v4), `proxy_v5.sh` (Abendlauf, `--datei`, `--lokal`, `--nur-pruefen`, `--trocken`, `--befehl`). Noch nicht: Archiv-Profil, `proxy.bat`, Einrichtung und Anleitung.
+
+**Tests** (in der Colima-VM auf dem Mac, Linux mit Bash 5.2, GNU-Werkzeugen, flock, Docker):
+- `tests/lauf_tests.sh`: 49 von 49 Prüfungen bestanden – Abendlauf, zweiter Lauf ändert nichts, fehlende Kopie wird ergänzt, zwei gleichzeitige Läufe, Abbruch per `TERM` (kein Proxy, keine Teildatei, kein Container übrig, Protokoll „abgebrochen“), Einzelaufrufe auch parallel, Prüflauf findet abgeschnittenen Proxy, Schnittrechner-Modus mit anschließendem Abendlauf, kein Dateiname wird als Befehl ausgeführt.
+- `tests/v4_vergleich.sh`: v4 (nur Pfade angepasst, `docker` als Attrappe) gegen v5, je Testdatei die übergebenen ffmpeg-Argumente. 32 gleich, 7 erwartete Unterschiede, 0 ungleich. Die erwarteten Unterschiede sind Fehler von v4: Bei 4 Dateien zerlegt `eval` den Namen (Anführungszeichen, Zeilenumbruch, `$(…)`, Backticks; die beiden letzten führt v4 tatsächlich als Befehl aus), bei 2 nicht lesbaren Dateien startet v4 ffmpeg trotzdem, bei 1 Datei (Tonspuren 2 + 16 Kanäle) fehlt in v4 ein Leerzeichen (`0:a-map`), ffmpeg scheitert in beiden.
+
+**Neue Befunde aus den Tests:**
+- **Befund 10: Mehr als 8 Kanäle in einer Spur scheitern in v4 (und damit in v5).** Die Zuordnung `-map 0:0 -map 0:1` nimmt die Spur mit 16 Kanälen zusätzlich zu den Monospuren auf; AAC kann höchstens 8 Kanäle, ffmpeg bricht ab. Betrifft HyperDeck-Aufnahmen mit 16 Kanälen. Der vorhandene Proxy im Testkorpus stammt aus einer älteren Skriptfassung. Am Testkorpus auf ELSA mit dem echten v4 zu bestätigen. Behebung nur als neues Profil.
+- **Befund 4 präzisiert:** Bei ungerader Ausgangsbreite (z. B. 1918×1080) ergibt `scale=-1:540` eine ungerade Breite (959); x264 verweigert das, es entsteht **kein** Proxy (in v4 wie in v5).
+- 3, 5 und 7 Kanäle (Befund 1): Der Proxy hat doppelt so viele Kanäle wie das Original (z. B. 3 → 6), ist aber brauchbar.
+
+**Abweichungen von v4 und von der Änderungsliste, ausdrücklich benannt:**
+1. **Ton-Prüfung beim Proxy (bestätigt von Michl, 13.11.2026):** Statt gleicher Kanalsumme (M3) nur „Proxy hat Ton genau dann, wenn das Original Ton hat“. Grund: Mit gleicher Kanalsumme lieferte v5 bei 3/5/7 Kanälen gar keinen Proxy mehr, wo v4 einen brauchbaren liefert. Beim Archiv bleibt der Vergleich der Kanalsumme.
+2. **`-hide_banner -loglevel error`** zusätzlich im ffmpeg-Aufruf: nur kürzere Ausgabe, kein Einfluss auf die Datei.
+3. **Dateien direkt im Wurzelordner `Aufnahmen`** (Befund 6): v5 bildet den zentralen Pfad richtig (`<ZENTRAL>/<Name>.<ext>.mov`), v4 falsch. Kommt laut Messung nicht vor.
+4. **Nicht lesbare Quellen und Dateien ohne Videospur:** v5 startet ffmpeg gar nicht erst, sondern meldet `Fehler` bzw. `kein_video`. v4 startet ffmpeg und scheitert ohne Meldung.
+5. **Umgebung auf dem Mac:** Die Tests laufen in der Colima-VM, nicht direkt auf macOS (dort nur Bash 3.2). Das Skript setzt Bash ≥ 4.4 voraus (ELSA und Container haben 5.2).
+
+**Offen für den nächsten Schritt:** Testkorpus auf ELSA (v4-Referenz und `framemd5`-Vergleich, braucht das Testverzeichnis von Michl), Archiv-Profil, `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.
