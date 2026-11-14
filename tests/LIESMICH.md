@@ -7,7 +7,9 @@ Stand: 13.11.2026
 | `erzeuge_testdateien.sh <Ordner>` | erzeugt 45 kurze Testdateien (Namen, Ton, Timecode, Formate, Defekte, Ausschlüsse) | Mac (Colima) oder ELSA |
 | `lauf_tests.sh` | Ablauftests von `proxy_v5.sh` mit diesen Dateien (49 Prüfungen) | Linux mit Docker: Colima-VM oder ELSA |
 | `v4_vergleich.sh` | vergleicht die ffmpeg-Argumente von v4 und v5 Datei für Datei (v4 mit `docker`-Attrappe) | Colima-VM |
-| `korpus_vergleich.sh` | v4 und v5 rechnen den Testkorpus `Aufnahmen/2025-03-04_PROXY`, Vergleich von Bild und Ton per `framemd5` | **ELSA** |
+| `archiv_tests.sh` | Ablauftests von `archiv_h264.sh` (neue Fassung): Auftrag, Fortsetzen, Prüflauf, Abbruch, zwei Aufträge, bisheriger Aufruf mit `xargs` (42 Prüfungen) | Colima-VM oder ELSA |
+| `archiv_vergleich.sh` | vergleicht die ffmpeg-Argumente des alten und des neuen `archiv_h264.sh` | Colima-VM |
+| `korpus_vergleich.sh` | alte und neue Fassung rechnen den Testkorpus `Aufnahmen/2025-03-04_PROXY`, Vergleich von Bild und Ton per `framemd5`; Proxy (Standard) oder mit `VERGLEICH=archiv` das Archivskript | **ELSA** |
 
 Auf dem Mac laufen die Tests in der Colima-VM (macOS hat nur Bash 3.2):
 
@@ -52,6 +54,14 @@ ssh -t mmattausch@192.168.23.8 sudo journalctl -u proxy-v5-korpus -f
 ```
 
 Fertig, wenn eine Zeile „Fertig. Gleich: …“ erscheint.
+
+**Archivskript statt Proxy:** gleiche Schritte, nur Schritt 3 so (eigene Unit, Umgebungsvariable `VERGLEICH=archiv`). Dauert länger als beim Proxy, weil in voller Auflösung gerechnet wird; geschätzt 1–2 Stunden.
+
+```bash
+ssh -t mmattausch@192.168.23.8 sudo systemd-run --collect --unit=archiv-korpus --setenv=VERGLEICH=archiv /usr/bin/bash /tmp/proxy_v5/tests/korpus_vergleich.sh
+```
+
+Fortschritt dann mit `journalctl -u archiv-korpus -f`.
 
 **5. Ergebnis holen** (Tabelle und Protokoll des Laufs; lesbar ohne sudo):
 

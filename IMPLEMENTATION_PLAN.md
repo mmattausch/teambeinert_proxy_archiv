@@ -352,4 +352,25 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 4. **Nicht lesbare Quellen und Dateien ohne Videospur:** v5 startet ffmpeg gar nicht erst, sondern meldet `Fehler` bzw. `kein_video`. v4 startet ffmpeg und scheitert ohne Meldung.
 5. **Umgebung auf dem Mac:** Die Tests laufen in der Colima-VM, nicht direkt auf macOS (dort nur Bash 3.2). Das Skript setzt Bash ≥ 4.4 voraus (ELSA und Container haben 5.2).
 
-**Offen für den nächsten Schritt:** Archiv-Profil, `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.
+**Archivskript (14.11.2026):** `archiv_h264.sh` (neue Fassung) mit `lib/archiv_profil.sh` auf demselben Kern; gemeinsame Teile mit dem Proxy in `lib/ablauf.sh` (Abbruch, Protokoll, Ausschlüsse, Umrechnen mit Prüfung) und `lib/v4_gemeinsam.sh` (Timecode, Ton-Zuordnung). Umgesetzt: M1–M15 aus der Änderungsliste; M16 als Schalter `AENDERUNGSZEIT_UEBERNEHMEN` (Standard aus, Entscheidung offen). Aufrufe: `archiv_h264.sh <Datei>…` (wie bisher, auch per `find | xargs -P 3`), `--auftrag`, `--nur-pruefen`, `--befehl`.
+- `tests/archiv_tests.sh`: 42 von 42 Prüfungen bestanden (Auftrag mit 17 Zeilen inkl. Kommentar, Leerzeile, fehlender Datei und Ausschluss; Fortsetzen mit `vorhanden_ok`; Prüflauf findet abgeschnittene Archiv-Fassung und löscht nichts; zwei Aufträge gleichzeitig; Abbruch per TERM an alle Prozesse; bisheriger Aufruf mit `xargs -P 3`; CSV-Format nach M4; volle Auflösung, 10 Bit).
+- `tests/archiv_vergleich.sh`: ffmpeg-Argumente alt gegen neu: 32 gleich, 7 erklärte Fehler des alten Skripts, 0 ungleich.
+- `tests/korpus_vergleich.sh` mit `VERGLEICH=archiv`, Probelauf in der VM mit identischem Image: 28 bitgleich, 11 erklärt, 0 ungleich. Lauf am Testkorpus auf ELSA steht aus.
+- Gemeinsame Auswertung von ffprobe auf das Format `flat` umgestellt: Bei MPEG-TS (`.MTS`) zählte die bisherige Auswertung die Spuren doppelt (Tonkanäle 4 statt 2). Proxy-Tests danach erneut bestanden.
+- **Tonspuren je Quelle (Testkorpus, gemessen) und Verhalten der Ton-Zuordnung aus v4** (Stand 14.11.2026):
+
+  | Quelle | Tonspuren im Original | Zweig in v4 | Ergebnis (Proxy und Archiv) |
+  |---|---|---|---|
+  | Sony FX3 (Standard), a7IV, GH5 (MOV, MP4, AVCHD), URSA, HyperDeck H.265 | 1 Spur, 2 Kanäle | „bis 8 Kanäle“: `-map 0:v -map 0:a` | 1 Spur AAC, 2 Kanäle – passt |
+  | Sony FX3 (4-Kanal-Modus), FS7 ProRes und XAVC-L | 4 Spuren, je 1 Kanal | „bis 8“ | 4 Spuren AAC mono – passt |
+  | FS7 MPEG HD 422 und XAVC-I (MXF) | 8 Spuren, je 1 Kanal | „bis 8“ | 8 Spuren AAC mono – passt |
+  | Sumo, Shogun (ProRes, DNxHR) | 1 Spur, 4 Kanäle | „bis 8“ | 1 Spur AAC, 4 Kanäle – passt |
+  | HyperDeck ProRes LT | 1 Spur, 16 Kanäle; Reihenfolge: 0 Timecode-Daten, 1 Bild, 2 Ton | „mehr als 8“: 16 × `pan=mono` aus `[0:a]` plus `-map 0:0 -map 0:1` | 16 Spuren AAC mono; `0:0`/`0:1` sind hier Timecode und Bild – passt (Kanalsumme 16 = 16, Archiv nachgerechnet am 14.11.2026) |
+  | DJI Mavic 3, GoPro-Zeitraffer, Avatar | kein Ton | – | kein Ton – passt |
+
+  Alle Quellen im Testkorpus laufen damit fehlerfrei, auch mit der strengen Kanalprüfung des Archivs.
+
+  **Schwachstelle der Zuordnung (nur theoretisch, in keiner gemessenen Datei):** `-map 0:0 -map 0:1` nimmt feste Spurnummern statt „Bild“. Bei der HyperDeck-Datei sind das Timecode und Bild, also richtig. Liegt der Ton dagegen an Stelle 1 (Datei ohne vorangestellte Timecode-Spur), wird die Originalspur zusätzlich abgelegt: bei 3/5/7 Kanälen doppelte Kanäle (Archiv: `Fehler`, Original wird nicht freigegeben), bei mehr als 8 Kanälen scheitert AAC (kein Proxy, kein Archiv). Außerdem greift `[0:a]` immer auf die erste Tonspur. Betroffen wären nur Geräte, die 3, 5, 7 oder mehr als 8 Kanäle schreiben und keine Timecode-Spur vor das Bild setzen; im Korpus und in der Stichprobe (100 Dateien) gibt es keine.
+- **Entscheidung 3/5/7 Kanäle beim Archiv (Beschluss Michl, 14.11.2026): Ton-Zuordnung bleibt unverändert, die strenge Kanalprüfung beim Archiv bleibt.** Tritt der Fall auf, meldet das Archivskript `Fehler`, das Original geht unverändert aufs Band; kein Datenverlust. Eine Änderung der Zuordnung wäre ein neues Profil und vorher an Originaldateien auf ELSA zu testen und in DaVinci anzusehen (Vorgabe Michl, 14.11.2026). Im Korpus fehlen noch Aufnahmen des ATEM Mini ISO (Michl sucht welche). Panasonic UC4000 zeichnet nicht selbst auf (Studiokamera, SDI in einen Rekorder wie HyperDeck), Sony HXC-FZ90 ist nicht im Einsatz.
+
+**Offen für den nächsten Schritt:** Korpus-Vergleich Archiv auf ELSA, `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.

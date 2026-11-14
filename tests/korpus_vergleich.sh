@@ -12,6 +12,7 @@
 #
 # Aufruf (auf ELSA als root, per systemd-run):
 #   tests/korpus_vergleich.sh [<Testordner>] [<Testverzeichnis>] [<v4-Skript>]
+#   VERGLEICH=archiv tests/korpus_vergleich.sh …   altes archiv_h264.sh gegen neue Fassung
 # Standard:
 #   Testordner      /mnt/Aufnahme_mirror/Aufnahmen/2025-03-04_PROXY
 #   Testverzeichnis /mnt/Mirror_2x8TB/Proxy_Output/_test
@@ -25,10 +26,20 @@ set -o pipefail
 umask 0002
 
 REPO="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+VERGLEICH="${VERGLEICH:-proxy}"
 KORPUS="${1:-/mnt/Aufnahme_mirror/Aufnahmen/2025-03-04_PROXY}"
 TEST="${2:-/mnt/Mirror_2x8TB/Proxy_Output/_test}"
-V4="${3:-/mnt/Mirror_2x8TB/Proxy_Output/proxy_conv_docker_v4.sh}"
-V4_SHA256="36e297631dfbf5bf10a75186c2c04cf947929598767bd6e965385d5fd7ad4132"
+if [ "$VERGLEICH" = "archiv" ]; then
+    V4="${3:-/mnt/Mirror_2x8TB/Proxy_Output/archiv_h264.sh}"
+    V4_SHA256="0426c8e6a779a1c6bf54df950173a3a7a9db8c8f84300d54ae8bd371c97cdf58"
+    ERWARTETE_AENDERUNGEN=2   # basedir; proxydest ist im alten Archivskript gesetzt, aber unbenutzt
+    NEU="$REPO/archiv_h264.sh"
+else
+    V4="${3:-/mnt/Mirror_2x8TB/Proxy_Output/proxy_conv_docker_v4.sh}"
+    V4_SHA256="36e297631dfbf5bf10a75186c2c04cf947929598767bd6e965385d5fd7ad4132"
+    ERWARTETE_AENDERUNGEN=3
+    NEU="$REPO/proxy_v5.sh"
+fi
 AUFNAHMEN="${AUFNAHMEN:-/mnt/Aufnahme_mirror/Aufnahmen}"
 
 zeit() { date '+%Y-%m-%d %H:%M:%S'; }
@@ -48,8 +59,8 @@ if [ "${V4_PRUEFSUMME_IGNORIEREN:-0}" != "1" ] && [ "$(sha256sum "$V4" | cut -d'
 fi
 mkdir -p "$TEST" || exit 2
 stempel="$(date '+%Y-%m-%d_%H%M%S')"
-ARBEIT="$TEST/lauf_$stempel"
-LOG="$TEST/vergleich_$stempel.log"
+ARBEIT="$TEST/lauf_${VERGLEICH}_$stempel"
+LOG="$TEST/vergleich_${VERGLEICH}_$stempel.log"
 # Alles zusätzlich in eine Logdatei (lesbar ohne journalctl/sudo)
 exec > >(tee -a "$LOG") 2>&1
 mkdir -p "$ARBEIT/v4/zentral" "$ARBEIT/v4/lokal" "$ARBEIT/v5/zentral" "$ARBEIT/v5/protokolle" "$ARBEIT/md5" || exit 2
@@ -58,6 +69,7 @@ mkdir -p "$ARBEIT/v4/zentral" "$ARBEIT/v4/lokal" "$ARBEIT/v5/zentral" "$ARBEIT/v
 cat > "$ARBEIT/v5.konf" <<EOF
 AUFNAHMEN="$AUFNAHMEN"
 ZENTRAL="$ARBEIT/v5/zentral"
+ZIEL_WURZEL="$ARBEIT/v5/zentral"
 PROTOKOLL_ORDNER="$ARBEIT/v5/protokolle"
 EOF
 
@@ -68,7 +80,7 @@ sed -e "s#^basedir=.*#basedir='$ARBEIT/v4/zentral/'#" \
     "$V4" > "$ARBEIT/v4_test.sh"
 chmod +x "$ARBEIT/v4_test.sh"
 geaendert="$(diff "$V4" "$ARBEIT/v4_test.sh" | grep -c '^>')"
-if [ "$geaendert" -ne 3 ]; then
+if [ "$geaendert" -ne "$ERWARTETE_AENDERUNGEN" ]; then
     echo "v4 ließ sich nicht wie erwartet anpassen (geänderte Zeilen: $geaendert):" >&2
     diff "$V4" "$ARBEIT/v4_test.sh" >&2
     exit 2
@@ -78,9 +90,14 @@ diff "$V4" "$ARBEIT/v4_test.sh" > "$ARBEIT/v4_aenderungen.diff"
 # Kern und Profil von v5 für Prüfung und ffprobe
 # shellcheck source=../lib/kern.sh
 source "$REPO/lib/kern.sh"
-# shellcheck source=../lib/proxy_profil.sh
-source "$REPO/lib/proxy_profil.sh"
-FFMPEG_IMAGE="$(sed -n 's/^FFMPEG_IMAGE="\(.*\)"/\1/p' "$REPO/proxy_v5.sh")"
+if [ "$VERGLEICH" = "archiv" ]; then
+    # shellcheck source=../lib/archiv_profil.sh
+    source "$REPO/lib/archiv_profil.sh"
+else
+    # shellcheck source=../lib/proxy_profil.sh
+    source "$REPO/lib/proxy_profil.sh"
+fi
+FFMPEG_IMAGE="$(sed -n 's/^FFMPEG_IMAGE="\(.*\)"/\1/p' "$NEU")"
 CONTAINER_USER=""
 EINBINDUNGEN_LESEN=("$AUFNAHMEN" "$ARBEIT")
 EINBINDUNGEN_SCHREIBEN=()
@@ -111,13 +128,13 @@ spuren() {
 
 # --- Lauf -------------------------------------------------------------------
 
-ERG="$TEST/vergleich_$stempel.csv"
+ERG="$TEST/vergleich_${VERGLEICH}_$stempel.csv"
 csv_zeile datei ergebnis grund v4_rc v5_rc v4_sekunden v5_sekunden v4_groesse v5_groesse pruefung_v5 > "$ERG"
 
 gleich=0; erklaert=0; ungleich=0; nr=0
 anzahl="$(find "$KORPUS" -type f ! -name '.*' ! -path '*/Proxies/*' \
     \( -iname '*.mp4' -o -iname '*.mxf' -o -iname '*.mov' -o -iname '*.mpeg' -o -iname '*.avi' -o -iname '*.mts' \) | wc -l)"
-meldung "Korpus $KORPUS: $anzahl Dateien. Arbeitsordner $ARBEIT"
+meldung "Vergleich $VERGLEICH ($V4 gegen $NEU). Korpus $KORPUS: $anzahl Dateien. Arbeitsordner $ARBEIT"
 
 while IFS= read -r -d '' datei; do
     nr=$((nr + 1))
@@ -138,7 +155,7 @@ while IFS= read -r -d '' datei; do
     t0=$(date +%s)
     befehl=()
     while IFS= read -r -d '' x; do befehl+=("$x"); done < <(
-        BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$ARBEIT/v5.konf" "$BASH" "$REPO/proxy_v5.sh" --befehl "$datei" < /dev/null 2> "$ARBEIT/v5_befehl_$nr.txt")
+        BEFEHL_ZEILENWEISE=1 PROXY_V5_KONF="$ARBEIT/v5.konf" ARCHIV_KONF="$ARBEIT/v5.konf" "$BASH" "$NEU" --befehl "$datei" < /dev/null 2> "$ARBEIT/v5_befehl_$nr.txt")
     v5_rc=99
     if [ "${#befehl[@]}" -eq 0 ]; then
         meldung "    v5 lieferte keinen Aufruf: $(head -c 300 "$ARBEIT/v5_befehl_$nr.txt" | tr '\n' ' ')"
@@ -167,6 +184,8 @@ while IFS= read -r -d '' datei; do
     name="$(basename -- "$datei")"
     if [ -f "$v4_datei" ] && [ "${v4_g:-0}" = "0" ] && [ ! -f "$v5_ziel" ]; then
         ergebnis="erklaert"; grund="ffmpeg scheitert in beiden; v4 hinterlässt eine leere Datei (0 Byte), v5 meldet Fehler"
+    elif [ ! -f "$v4_datei" ] && [ "$VERGLEICH" = "archiv" ] && [[ "$datei" == *00_* ]]; then
+        ergebnis="erklaert"; grund="altes Archivskript überspringt 00_ an beliebiger Stelle (M7)"
     elif [ ! -f "$v4_datei" ] && [ ! -f "$v5_ziel" ]; then
         ergebnis="erklaert"; grund="beide liefern keinen Proxy"
     elif [ ! -f "$v4_datei" ] && [[ "$name" == *[\"\'\$\`\\]* || "$name" == *$'\n'* ]]; then

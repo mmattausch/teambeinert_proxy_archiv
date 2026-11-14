@@ -107,39 +107,43 @@ ffprobe_lauf() {
 # ---------------------------------------------------------------------------
 
 medien_eigenschaften() {
-    local datei="$1" praefix="$2" ausgabe zeile kanaele breite hoehe
+    local datei="$1" praefix="$2" ausgabe
     local laufzeit="" videospuren=0 b1="" h1="" summe=0 ok=0
-    # Abschnittsnamen mitschreiben (compact, p=1): Bei MPEG-TS listet ffprobe dieselben
-    # Spuren zusätzlich unter "program|stream|…"; gezählt werden nur Zeilen "stream|…".
+    # Format "flat": Echte Spuren heißen streams.stream.N.…; bei MPEG-TS listet ffprobe
+    # dieselben Spuren zusätzlich als programs.program.M.streams.stream.N.…, die hier
+    # nicht mitgezählt werden.
     if ausgabe="$(ffprobe_lauf -v error \
-        -show_entries 'format=duration:stream=codec_type,width,height,channels' \
-        -of 'compact=p=1:nk=0' "$datei" 2>/dev/null)"; then
+        -show_entries 'format=duration:stream=index,codec_type,width,height,channels' \
+        -of flat "$datei" 2>/dev/null)"; then
         ok=1
-        while IFS= read -r zeile; do
-            case "$zeile" in
-                format\|*duration=*)
-                    laufzeit="${zeile##*duration=}"
-                    laufzeit="${laufzeit%%|*}"
-                    ;;
-                stream\|*codec_type=video*)
-                    videospuren=$((videospuren + 1))
-                    breite="$(sed -n 's/.*width=\([0-9]*\).*/\1/p' <<<"$zeile")"
-                    hoehe="$(sed -n 's/.*height=\([0-9]*\).*/\1/p' <<<"$zeile")"
-                    if [ -z "$b1" ]; then b1="$breite"; h1="$hoehe"; fi
-                    ;;
-                stream\|*codec_type=audio*)
-                    kanaele="$(sed -n 's/.*channels=\([0-9]*\).*/\1/p' <<<"$zeile")"
-                    ist_zahl "${kanaele:-x}" && summe=$((summe + kanaele))
-                    ;;
-            esac
-        done <<<"$ausgabe"
+        local auswertung
+        auswertung="$(awk -F'=' '
+            /^format\.duration=/ { d = $2; gsub(/"/, "", d) }
+            /^streams\.stream\.[0-9]+\./ {
+                split($1, t, "."); n = t[3]; k = t[4]; v = $2; gsub(/"/, "", v)
+                if (k == "codec_type") typ[n] = v
+                if (k == "width") w[n] = v
+                if (k == "height") h[n] = v
+                if (k == "channels") c[n] = v
+                if (!(n in gesehen)) { gesehen[n] = 1; reihe[++anz] = n }
+            }
+            END {
+                vs = 0; summe = 0; b1 = ""; h1 = ""
+                for (i = 1; i <= anz; i++) {
+                    n = reihe[i]
+                    if (typ[n] == "video") { vs++; if (b1 == "") { b1 = w[n]; h1 = h[n] } }
+                    if (typ[n] == "audio" && c[n] ~ /^[0-9]+$/) summe += c[n]
+                }
+                printf "%s|%d|%s|%s|%d\n", d, vs, b1, h1, summe
+            }' <<<"$ausgabe")"
+        IFS='|' read -r laufzeit videospuren b1 h1 summe <<<"$auswertung"
     fi
     printf -v "${praefix}_ok" '%s' "$ok"
     printf -v "${praefix}_laufzeit" '%s' "$laufzeit"
-    printf -v "${praefix}_videospuren" '%s' "$videospuren"
+    printf -v "${praefix}_videospuren" '%s' "${videospuren:-0}"
     printf -v "${praefix}_breite" '%s' "$b1"
     printf -v "${praefix}_hoehe" '%s' "$h1"
-    printf -v "${praefix}_tonkanaele" '%s' "$summe"
+    printf -v "${praefix}_tonkanaele" '%s' "${summe:-0}"
 }
 
 # Laufzeitvergleich mit Toleranz (Sekunden, Kommazahlen)
