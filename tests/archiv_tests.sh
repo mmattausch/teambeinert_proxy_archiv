@@ -156,6 +156,15 @@ pruefe "Rückgabewert 0" gleich "$rc" 0
 pruefe "beide Telefonvideos umgerechnet" test "$(find "$ZW/2026-01-02_Telefon" -name '*.mov' | wc -l)" -eq 2
 pruefe "Einzelprotokoll geschrieben" test -n "$(ls "$PROT"/einzel_*.csv 2>/dev/null)"
 
+echo "== 6b. Aufruf mit --ordner"
+rm -f "$ZW/2026-01-02_Telefon/"*.mov
+archiv --ordner "$AUF/2026-01-02_Telefon" > "$DATEN/archiv6b.txt" 2>&1
+rc=$?
+pruefe "Rückgabewert 0" gleich "$rc" 0
+pruefe "beide Telefonvideos umgerechnet" test "$(find "$ZW/2026-01-02_Telefon" -name '*.mov' | wc -l)" -eq 2
+pruefe "Zusammenfassung ausgegeben" grep -q "Zusammenfassung" "$DATEN/archiv6b.txt"
+pruefe ".mkv nicht angefasst" datei_fehlt "$ZW/2026-01-02_Telefon/keine_videoendung.mkv.mov"
+
 echo "== 7. Archiv-Fassung: volle Auflösung, 10 Bit"
 info="$(docker run --rm -v "$AUF:$AUF:ro" --entrypoint ffprobe "$IMAGE" -v error -select_streams v:0 \
     -show_entries stream=width,height,pix_fmt,profile -of csv=p=0 "$ZW/$K/normal.mp4.mov" < /dev/null)"

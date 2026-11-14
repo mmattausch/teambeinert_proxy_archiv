@@ -10,6 +10,7 @@
 #
 # Aufrufe:
 #   archiv_h264.sh <Datei>…                    einzelne Dateien (wie bisher, auch per find | xargs -P 3)
+#   archiv_h264.sh --ordner <Ordner>           alle Videodateien eines Ordners (ersetzt find | xargs -P 3)
 #   archiv_h264.sh --auftrag <Auftrag.txt>     Auftragsdatei des Werkzeugs „Bandarchiv“
 #   archiv_h264.sh --nur-pruefen --auftrag <Auftrag.txt>
 #   archiv_h264.sh --nur-pruefen <Datei>…      vorhandene Archiv-Fassungen prüfen, nichts umrechnen
@@ -245,7 +246,7 @@ abschluss() {
 }
 
 hilfe() {
-    sed -n '2,23p' "$SKRIPT" | sed 's/^# \{0,1\}//'
+    sed -n '2,24p' "$SKRIPT" | sed 's/^# \{0,1\}//'
 }
 
 # ---------------------------------------------------------------------------
@@ -301,6 +302,30 @@ case "$aufruf" in
             teilreste_loeschen "$ZIEL_WURZEL" '*.mov.teil'
             auftrag_lesen "$auftragsdatei" | viele_dateien datei
         fi
+        rc=$?
+        meldung "Protokoll: $PROTOKOLL_DATEI"
+        abschluss "$rc"
+        exit $?
+        ;;
+
+    --ordner)
+        # Alle Videodateien eines Ordners, wie bisher per find | xargs -P 3 (zusätzlicher Aufruf,
+        # nicht in der Änderungsliste; Ergebnis wie Einzelaufrufe im Protokoll einzel_<Datum>.csv)
+        ordner="${2:-}"
+        if [ -z "$ordner" ] || [ ! -d "$ordner" ]; then
+            echo "Ordner nicht gefunden: ${ordner:-<fehlt>}" >&2
+            exit 2
+        fi
+        umgebung_pruefen || exit 2
+        ordner="$(cd -- "$ordner" && pwd)"
+        PROTOKOLL_DATEI="$PROTOKOLL_ORDNER/einzel_$(date '+%Y-%m-%d').csv"
+        ZAEHLER_DATEI="$(mktemp)"
+        protokoll_beginnen || exit 2
+        meldung "Archivskript $SKRIPT_VERSION, Ordner $ordner ($PARALLEL parallel)"
+        if [ "$nur_pruefen" = 1 ]; then aktion=pruefen; else aktion=datei; fi
+        find "$ordner" -type d -name Proxies -prune -o -type f ! -name '.*' \
+            \( -iname '*.mp4' -o -iname '*.mxf' -o -iname '*.mov' -o -iname '*.mpeg' -o -iname '*.avi' -o -iname '*.mts' \) \
+            -print0 | viele_dateien "$aktion"
         rc=$?
         meldung "Protokoll: $PROTOKOLL_DATEI"
         abschluss "$rc"
