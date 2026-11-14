@@ -40,8 +40,10 @@ ssh -t mmattausch@192.168.23.8 sudo mkdir -p /mnt/Mirror_2x8TB/Proxy_Output/_tes
 **3. Starten:**
 
 ```bash
-ssh -t mmattausch@192.168.23.8 sudo systemd-run --unit=proxy-v5-korpus /usr/bin/bash /tmp/proxy_v5/tests/korpus_vergleich.sh
+ssh -t mmattausch@192.168.23.8 sudo systemd-run --collect --unit=proxy-v5-korpus /usr/bin/bash /tmp/proxy_v5/tests/korpus_vergleich.sh
 ```
+
+Meldet `systemd-run`, die Unit sei „already loaded“, hängt noch eine alte Unit vom vorigen Lauf. Dann einmal `ssh -t mmattausch@192.168.23.8 sudo systemctl reset-failed proxy-v5-korpus` und erneut starten. Mit `--collect` passiert das künftig nicht mehr.
 
 **4. Fortschritt ansehen** (Strg+C beendet nur das Ansehen):
 
