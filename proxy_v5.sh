@@ -133,7 +133,7 @@ datei_bearbeiten() {
     AKTIV_BEGINN="$BEGINN"
 
     if [ "$MODUS" = "lokal" ]; then
-        if [ -f "$ZIEL_LOKAL" ]; then
+        if [ -s "$ZIEL_LOKAL" ]; then
             ergebnis vorhanden "" "$ZIEL_LOKAL"
         else
             ordner_anlegen "$(dirname -- "$ZIEL_LOKAL")" || { ergebnis Fehler "Ordner Proxies/ nicht anlegbar"; AKTIV_QUELLE=""; return; }
@@ -146,8 +146,9 @@ datei_bearbeiten() {
 
     # ELSA: wie v4 – beide da: nichts; eine fehlt: kopieren; keine: umrechnen
     local hat_lokal=0 hat_zentral=0
-    [ -f "$ZIEL_LOKAL" ] && hat_lokal=1
-    [ -f "$ZIEL_ZENTRAL" ] && hat_zentral=1
+    # Leere Proxys (0 Byte) gelten als fehlend (Beschluss Michl, 23.11.2026); v4 hielt sie für fertig.
+    [ -s "$ZIEL_LOKAL" ] && hat_lokal=1
+    [ -s "$ZIEL_ZENTRAL" ] && hat_zentral=1
 
     if [ "$hat_lokal" = 1 ] && [ "$hat_zentral" = 1 ]; then
         ergebnis vorhanden "" "$ZIEL_LOKAL"
@@ -227,8 +228,8 @@ datei_trocken() {
     fi
     ziele_berechnen
     local hat_lokal=0 hat_zentral=0
-    [ -f "$ZIEL_LOKAL" ] && hat_lokal=1
-    [ -n "$ZIEL_ZENTRAL" ] && [ -f "$ZIEL_ZENTRAL" ] && hat_zentral=1
+    [ -s "$ZIEL_LOKAL" ] && hat_lokal=1
+    [ -n "$ZIEL_ZENTRAL" ] && [ -s "$ZIEL_ZENTRAL" ] && hat_zentral=1
     if [ "$MODUS" = "lokal" ]; then
         if [ "$hat_lokal" = 1 ]; then zaehlen vorhanden; else printf 'umrechnen     %s\n' "$QUELLE"; zaehlen umrechnen; fi
         return

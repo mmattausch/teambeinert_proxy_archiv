@@ -30,7 +30,7 @@ ssh mmattausch@192.168.23.8 mkdir -p /mnt/Mirror_2x8TB/Proxy_Output/v5 /mnt/Mirr
 ```
 
 ```bash
-rsync -a --delete ~/code/teambeinert_proxy_archiv/proxy_v5.sh ~/code/teambeinert_proxy_archiv/archiv_h264.sh ~/code/teambeinert_proxy_archiv/lib mmattausch@192.168.23.8:/mnt/Mirror_2x8TB/Proxy_Output/v5/
+rsync -a --delete ~/code/teambeinert_proxy_archiv/proxy_v5.sh ~/code/teambeinert_proxy_archiv/archiv_h264.sh ~/code/teambeinert_proxy_archiv/lib ~/code/teambeinert_proxy_archiv/werkzeuge mmattausch@192.168.23.8:/mnt/Mirror_2x8TB/Proxy_Output/v5/
 ```
 
 Stand festhalten (Commit, der auf ELSA liegt):
@@ -45,15 +45,21 @@ Die Ausgabe kommt ins Änderungsprotokoll (Abschnitt 8).
 
 ## 2. Leere Proxys aus der v4-Zeit suchen
 
-v4 hinterlässt bei gescheitertem ffmpeg leere Dateien (0 Byte), die als fertig gelten (Befund 11). Auch v5 hält sie für vorhanden, solange beide Kopien da sind. Deshalb vorher suchen (nur lesend):
+v4 hinterlässt bei gescheitertem ffmpeg leere Dateien (0 Byte), die als fertig gelten (Befund 11). v5 behandelt einen leeren Proxy wie einen fehlenden und rechnet ihn neu, sobald das Original in `Aufnahmen` liegt; dafür muss nichts gelöscht werden. Neu rechnen lässt sich ein Proxy aber nur, wenn das Original noch in `Aufnahmen` liegt; viele Originale sind schon auf Band oder gelöscht. Dieser Schritt zeigt, wie viele leere Proxys es gibt und wohin sie gehören.
+
+Deshalb ordnet `werkzeuge/leere_proxys.sh` jeden leeren Proxy seinem Original zu (nur lesend, ohne sudo):
 
 ```bash
-ssh mmattausch@192.168.23.8 "find /mnt/Aufnahme_mirror/Aufnahmen -path '*/Proxies/*' -name '*.mov' -size 0; find /mnt/Mirror_2x8TB/Proxy_Output/mnt/Aufnahmen -name '*.mov' -size 0"
+ssh mmattausch@192.168.23.8 "bash /mnt/Mirror_2x8TB/Proxy_Output/v5/werkzeuge/leere_proxys.sh > /mnt/Mirror_2x8TB/Proxy_Output/_protokolle/leere_proxys.tsv; cut -f1 /mnt/Mirror_2x8TB/Proxy_Output/_protokolle/leere_proxys.tsv | sort | uniq -c"
 ```
 
-Die Liste an Claude geben. Was dort steht, löscht Michl; v5 rechnet diese Proxys beim nächsten Lauf neu. Wenn die Liste leer ist: weiter mit Schritt 3.
+| Gruppe | Bedeutung | Was tun |
+|---|---|---|
+| `original_da` | Original liegt in `Aufnahmen` | Nichts löschen: v5 rechnet sie beim nächsten Lauf neu und ersetzt die leeren Dateien. Der Trockenlauf (Schritt 3) zeigt sie als `umrechnen`. |
+| `original_00` | Original liegt in `Aufnahmen/00_*` oder `01_*` (z. B. Sammelordner fürs Band) | Nichts. Dort rechnen weder v4 noch v5. |
+| `original_fehlt` | Kein Original in `Aufnahmen` (auf Band, verschoben oder gelöscht) | Nichts. Der leere Proxy schadet nicht, neu rechnen geht nicht. Ob man solche Reste aufräumt, ist eine eigene Entscheidung. |
 
----
+Die Datei `leere_proxys.tsv` (Spalten: Gruppe, Proxy, Original) an Claude geben. Danach weiter mit Schritt 3.
 
 ## 3. Trockenlauf (ändert nichts)
 

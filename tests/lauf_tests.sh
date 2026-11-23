@@ -95,6 +95,16 @@ pruefe "lokale Kopie wieder da" datei_da "$AUF/$K/Proxies/tc_ohne.mov"
 pruefe "zweimal kopiert" test "$(grep -c 'kopiert: ' "$DATEN/lauf3.txt")" -eq 2
 pruefe "lokal und zentral gleich" cmp -s "$ZEN/$K/tc_ohne.mov.mov" "$AUF/$K/Proxies/tc_ohne.mov"
 
+echo "== 3b. Leere Proxys (0 Byte, Rest von v4) gelten als fehlend"
+: > "$AUF/$K/Proxies/tc_2997_dropframe.mov"
+: > "$ZEN/$K/tc_2997_dropframe.mov.mov"
+: > "$AUF/$K/Proxies/ton_1kanal.mov"
+lauf > "$DATEN/lauf3b.txt" 2>&1
+pruefe "beide leer: neu gerechnet, lokal nicht mehr leer" test -s "$AUF/$K/Proxies/tc_2997_dropframe.mov"
+pruefe "beide leer: zentral nicht mehr leer" test -s "$ZEN/$K/tc_2997_dropframe.mov.mov"
+pruefe "lokal leer, zentral gut: aus zentral kopiert" cmp -s "$AUF/$K/Proxies/ton_1kanal.mov" "$ZEN/$K/ton_1kanal.mov.mov"
+pruefe "keine leere Datei wird kopiert" test -z "$(find "$AUF" "$ZEN" -name '*.mov' -size 0 -path '*Testprojekt*' -print -quit)"
+
 echo "== 4. Zwei gleichzeitige Läufe"
 rm -f "$AUF/$K/Proxies/normal.mov" "$ZEN/$K/normal.mp4.mov"
 lauf > "$DATEN/lauf4a.txt" 2>&1 &

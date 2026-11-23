@@ -260,13 +260,19 @@ platz_reicht() {
     [ "$frei" -ge "$2" ]
 }
 
-# Teildatei unter den endgültigen Namen bringen, ohne zu überschreiben.
-# 0 = umbenannt, 1 = Ziel existierte schon (Teildatei wird gelöscht)
+# Teildatei unter den endgültigen Namen bringen, ohne ein vorhandenes Ergebnis zu
+# überschreiben. 0 = umbenannt, 1 = Ziel existierte schon mit Inhalt (Teildatei wird gelöscht)
 teildatei_uebernehmen() {
     local teil="$1" ziel="$2"
-    if [ -e "$ziel" ]; then
+    if [ -s "$ziel" ]; then
         rm -f -- "$teil"
         return 1
+    fi
+    # Ein leeres Ziel (0 Byte, Rest eines gescheiterten v4-Laufs) gilt als fehlend und
+    # wird durch die geprüfte Teildatei ersetzt (Beschluss Michl, 23.11.2026).
+    if [ -e "$ziel" ] && [ ! -s "$ziel" ]; then
+        mv -f -- "$teil" "$ziel"
+        return 0
     fi
     mv -n -- "$teil" "$ziel"
     if [ -e "$teil" ]; then
