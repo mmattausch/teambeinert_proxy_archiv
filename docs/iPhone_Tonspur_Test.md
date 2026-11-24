@@ -94,3 +94,29 @@ Bitte kurz zu jedem Punkt:
 7. Welche Variante würdest du nehmen?
 
 Danach kann `D:\iPhonetest` gelöscht werden.
+
+---
+
+## Runde 2: Testproxys vom Server (24.11.2026)
+
+Ergebnis von Runde 1: Die zusätzliche Tonspur ist Apple Spatial Audio und im Schnitt nicht nötig. Der Abbruch beim Bild kam von der älteren ffmpeg-Version auf dem Schnittrechner (Januar 2025). Mit der ffmpeg-Version auf ELSA (8.0) lassen sich die Dateien umrechnen, wenn die Spatial-Audio-Spur weggelassen wird.
+
+Die Datei ist übrigens Dolby Vision 8.4 (HDR, HLG) im Hochformat.
+
+Die Testproxys liegen jetzt auf dem Server, erzeugt mit genau dem ffmpeg des Proxy-Skripts, Einstellungen wie immer, nur ohne Spur 2:
+
+```
+X:\_test\iphone\Proxies\IMG_4931.mov … IMG_4934.mov
+```
+
+**Bitte so testen:**
+1. In DaVinci die Originale aus `D:\iPhonetest` (oder direkt von `Y:\2025_12_05_Alex_fuer_Malte\`) in ein Testprojekt holen.
+2. „Link Proxy Media“ auf `X:\_test\iphone\Proxies` zeigen lassen.
+3. Ansehen und anhören, im Original und mit Proxy.
+
+**Feedback an Michl:**
+1. Verknüpft DaVinci alle vier Proxys?
+2. Hochformat: Steht das Bild im Proxy richtig (hochkant, nicht gedreht oder verzerrt)?
+3. Ton: Stereospur vorhanden und synchron?
+4. Farben: Wie sieht der Proxy im Vergleich zum Original aus (HDR-Original, Proxy 8 Bit SDR)? Für den Schnitt brauchbar?
+5. Sonst etwas auffällig?
