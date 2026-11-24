@@ -376,6 +376,8 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 
 **Leere Proxys (Beschluss Michl, 23.11.2026, Abweichung von v4):** Ein Proxy mit 0 Byte gilt in v5 als fehlend. Ist das Original da, wird neu gerechnet; eine leere Datei wird nie an den anderen Ort kopiert, sondern durch eine geprüfte ersetzt. Die bitgleichen Ergebnisse ändern sich dadurch nicht. Tests: `lauf_tests.sh` 53 von 53 (Abschnitt 3b). `werkzeuge/leere_proxys.sh` ordnet vorhandene leere Proxys ihrem Original zu (Original in `Aufnahmen`, in `00_*`/`01_*` oder nicht mehr vorhanden); nur bei vorhandenem Original wird neu gerechnet.
 
+**Syncthing-Ordner (Beschluss Michl, 24.11.2026, Abweichung von v4):** Ordner mit `.stfolder` (und alles darunter) sind Transport-/Ingest-Ordner; Proxy-Skript und Archivskript überspringen sie mit Grund „Syncthing-Ordner“. Umgesetzt im gemeinsamen Kern (`lib/ablauf.sh`). Tests: Proxy 56 von 56, Archiv 48 von 48. Anlass: Trockenlauf vom 23.11.2026 wollte 418 Dateien im IFAT-Sharefolder rechnen; v4 scheiterte dort seit Mai jeden Abend an „Permission denied“ in der zentralen Ablage.
+
 **Einrichtung:** Anleitung für ELSA in `docs/einrichtung-elsa.md` (Start mit Containern als root wie bisher; M9 als eigener Schritt danach).
 
 **Offen für den nächsten Schritt:** `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.

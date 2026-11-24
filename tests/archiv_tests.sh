@@ -165,6 +165,15 @@ pruefe "beide Telefonvideos umgerechnet" test "$(find "$ZW/2026-01-02_Telefon" -
 pruefe "Zusammenfassung ausgegeben" grep -q "Zusammenfassung" "$DATEN/archiv6b.txt"
 pruefe ".mkv nicht angefasst" datei_fehlt "$ZW/2026-01-02_Telefon/keine_videoendung.mkv.mov"
 
+echo "== 6c. Syncthing-Ordner"
+st="$AUF/2026-01-06_Syncthing_Ingest"
+mkdir -p "$st/.stfolder" "$st/Kamera"
+cp "$AUF/$K/normal.mp4" "$st/Kamera/clip.mp4"
+archiv "$st/Kamera/clip.mp4" > "$DATEN/archiv6c.txt" 2>&1
+pruefe "Datei im Syncthing-Ordner: uebersprungen" grep -q "uebersprungen: .*Syncthing-Ordner" "$DATEN/archiv6c.txt"
+pruefe "keine Archiv-Fassung" datei_fehlt "$ZW/2026-01-06_Syncthing_Ingest"
+rm -rf "$st"
+
 echo "== 7. Archiv-Fassung: volle Auflösung, 10 Bit"
 info="$(docker run --rm -v "$AUF:$AUF:ro" --entrypoint ffprobe "$IMAGE" -v error -select_streams v:0 \
     -show_entries stream=width,height,pix_fmt,profile -of csv=p=0 "$ZW/$K/normal.mp4.mov" < /dev/null)"

@@ -84,7 +84,7 @@ absolut() {
 
 # Prüft, ob die Datei überhaupt bearbeitet wird. Gibt den Grund aus, wenn nicht.
 ausgeschlossen() {
-    local name rel erster
+    local name rel erster grund
     name="$(basename -- "$QUELLE")"
     case "$name" in
         .*) echo "versteckte Datei"; return 0 ;;
@@ -108,6 +108,28 @@ ausgeschlossen() {
             esac
         fi
     fi
+    if grund="$(syncthing_ordner)"; then
+        echo "$grund"; return 0
+    fi
+    return 1
+}
+
+# Syncthing-Ordner sind Transport- bzw. Ingest-Ordner (Beschluss Michl, 24.11.2026):
+# keine Proxys, keine Archiv-Fassungen. Erkannt am Ordner .stfolder, den Syncthing in
+# der Wurzel jedes geteilten Ordners anlegt. Gesucht wird vom Ordner der Datei aufwärts
+# bis zur Wurzel (Aufnahmen bzw. Ordner am Schnittrechner).
+syncthing_ordner() {
+    local ordner wurzel
+    ordner="$(dirname -- "$QUELLE")"
+    if [ "$MODUS" = "lokal" ]; then wurzel="${LOKAL_WURZEL:-/}"; else wurzel="$AUFNAHMEN"; fi
+    while :; do
+        if [ -d "$ordner/.stfolder" ]; then
+            echo "Syncthing-Ordner (Transport/Ingest): ${ordner#"$wurzel"/}"
+            return 0
+        fi
+        [ "$ordner" = "$wurzel" ] || [ "$ordner" = "/" ] || [ -z "$ordner" ] && break
+        ordner="$(dirname -- "$ordner")"
+    done
     return 1
 }
 

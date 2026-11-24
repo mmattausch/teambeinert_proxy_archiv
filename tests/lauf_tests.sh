@@ -105,6 +105,17 @@ pruefe "beide leer: zentral nicht mehr leer" test -s "$ZEN/$K/tc_2997_dropframe.
 pruefe "lokal leer, zentral gut: aus zentral kopiert" cmp -s "$AUF/$K/Proxies/ton_1kanal.mov" "$ZEN/$K/ton_1kanal.mov.mov"
 pruefe "keine leere Datei wird kopiert" test -z "$(find "$AUF" "$ZEN" -name '*.mov' -size 0 -path '*Testprojekt*' -print -quit)"
 
+echo "== 3c. Syncthing-Ordner werden übersprungen"
+st="$AUF/2026-01-06_Syncthing_Ingest"
+mkdir -p "$st/.stfolder" "$st/Kamera"
+cp "$AUF/$K/normal.mp4" "$st/Kamera/clip.mp4"
+lauf > "$DATEN/lauf3c.txt" 2>&1
+pruefe "kein Proxy im Syncthing-Ordner" datei_fehlt "$st/Kamera/Proxies"
+pruefe "keine zentrale Kopie" datei_fehlt "$ZEN/2026-01-06_Syncthing_Ingest"
+lauf --datei "$st/Kamera/clip.mp4" > "$DATEN/lauf3c2.txt" 2>&1
+pruefe "Einzelaufruf: übersprungen mit Grund" grep -q "uebersprungen: .*Syncthing-Ordner" "$DATEN/lauf3c2.txt"
+rm -rf "$st"
+
 echo "== 4. Zwei gleichzeitige Läufe"
 rm -f "$AUF/$K/Proxies/normal.mov" "$ZEN/$K/normal.mp4.mov"
 lauf > "$DATEN/lauf4a.txt" 2>&1 &
