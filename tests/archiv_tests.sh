@@ -56,13 +56,14 @@ EOF
 
 echo "== Vorbereitung"
 rm -rf "$DATEN"
+# Reste früherer Vergleichsläufe (das alte Archivskript führt Namen per eval aus)
+rm -f "$HOME/proxy_v5_pwned" "$HOME/proxy_v5_pwned2"
 "$REPO/tests/erzeuge_testdateien.sh" "$DATEN" > /dev/null || { echo "Testdateien konnten nicht erzeugt werden"; exit 2; }
 cat > "$KONF" <<EOF
 AUFNAHMEN="$AUF"
 ZIEL_WURZEL="$ZW"
 RESERVE_BYTE=\$((100 * 1024 * 1024))
 EOF
-rm -f "$HOME/proxy_v5_pwned" "$HOME/proxy_v5_pwned2"
 
 AUFTRAG_DATEI="$DATEN/A0001.txt"
 {

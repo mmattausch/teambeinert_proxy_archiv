@@ -380,6 +380,8 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 
 **Erster Lauf auf ELSA (24.11.2026) und Gruppe Firma (Beschluss Michl, 25.11.2026):** 424 Proxys neu, 37 Fehler (26 ungerade Breite, 4 iPhone, 4 Permission denied, 3 Einzelfälle; Details im Wissens-Repo). Die Container laufen jetzt als root mit Gruppe `Firma` (`CONTAINER_USER="0:1003"`), weil zentrale Ordner mit reiner Firma-ACL root ohne diese Gruppe abweisen. Scheitert das Umbenennen der Teildatei, meldet v5 jetzt `Fehler` statt fälschlich `vorhanden`. Tests: Proxy 56/56, Archiv 48/48.
 
+**Befund 25.11.2026, Startskript des Images:** Der Test an `DJI_0813.mp4` scheiterte trotz `0:1003`. Ursache: `linuxserver/ffmpeg` startet ffmpeg über `/ffmpegwrapper.sh`. Läuft der Container als root, übernimmt das Skript UID und GID des Eigentümers der Eingabedatei (hier `mmattausch:mmattausch`, 1001:3000, ohne `Firma`) und ruft ffmpeg als Benutzer `abc` auf; `--user` wirkt damit nicht. So lief es auch unter v4. v5 startet ffmpeg deshalb jetzt wie ffprobe direkt (`--entrypoint ffmpeg`). **Abweichung von v4:** Neue Proxys gehören `root:Firma` statt dem Eigentümer des Originals. Die Hardware-Einrichtung des Startskripts (`/dev/dri`) entfällt; ELSA hat keine GPU im Container. Tests: Proxy 56/56, Archiv 48/48, beide Vergleiche ohne Unterschied.
+
 **Einrichtung:** Anleitung für ELSA in `docs/einrichtung-elsa.md` (Start mit Containern als root wie bisher; M9 als eigener Schritt danach).
 
 **Offen für den nächsten Schritt:** `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.

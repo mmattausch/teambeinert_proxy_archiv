@@ -44,6 +44,8 @@ nicht_root() { [ "$(stat -c %u "$1")" != "0" ]; }
 
 echo "== Vorbereitung"
 rm -rf "$DATEN"
+# Reste früherer Vergleichsläufe (das alte Archivskript führt Namen per eval aus)
+rm -f "$HOME/proxy_v5_pwned" "$HOME/proxy_v5_pwned2"
 "$REPO/tests/erzeuge_testdateien.sh" "$DATEN" > /dev/null || { echo "Testdateien konnten nicht erzeugt werden"; exit 2; }
 cat > "$KONF" <<EOF
 AUFNAHMEN="$AUF"
@@ -52,7 +54,6 @@ PROTOKOLL_ORDNER="$PROT"
 ALTER_MIN=0
 RESERVE_BYTE=\$((100 * 1024 * 1024))
 EOF
-rm -f "$HOME/proxy_v5_pwned" "$HOME/proxy_v5_pwned2"
 
 echo "== 1. Abendlauf"
 lauf > "$DATEN/lauf1.txt" 2>&1

@@ -136,6 +136,9 @@ while IFS= read -r -d '' datei; do
 done < <(find "$ORDNER" -maxdepth 1 -type f ! -name '.*' \
     \( -iname '*.mp4' -o -iname '*.mxf' -o -iname '*.mov' -o -iname '*.mpeg' -o -iname '*.avi' -o -iname '*.mts' \) -print0 | sort -z)
 
+# Das alte Skript führt präparierte Dateinamen per eval aus; die Marker wieder entfernen.
+rm -f "$HOME/proxy_v5_pwned" "$HOME/proxy_v5_pwned2"
+
 echo
 echo "Gleich: $gleich, erwartete Unterschiede (Fehler des alten Skripts): $erwartet, ungleich: $ungleich"
 [ "$ungleich" -eq 0 ]

@@ -85,9 +85,9 @@ container_vorspann() {
     for p in "${EINBINDUNGEN_SCHREIBEN[@]}"; do
         _ziel+=(-v "$p:$p")
     done
-    if [ "$programm" = "ffprobe" ]; then
-        _ziel+=(--entrypoint ffprobe)
-    fi
+    # Immer am Startskript des Images (/ffmpegwrapper.sh) vorbei: Es startet ffmpeg
+    # sonst als Eigentümer der Eingabedatei und übergeht --user (Befund 25.11.2026).
+    _ziel+=(--entrypoint "$programm")
     _ziel+=("$FFMPEG_IMAGE")
 }
 
