@@ -8,16 +8,9 @@ Voraussetzung: Die Tests sind bestanden (`docs/Testnachweis.md`): v5 liefert fü
 
 ---
 
-## Entscheidung vorab: Unter welchem Benutzer laufen die Container?
+## Benutzer der Container
 
-Heute laufen v4 und der Container als root; alle Proxys gehören root.
-
-| Möglichkeit | Folge |
-|---|---|
-| **A. Wie bisher, root** (`CONTAINER_USER` leer) | Keine weitere Einrichtung. Proxys gehören weiter root, wie heute. Die Sicherheitslücken (a) bis (e) sind trotzdem geschlossen: kein `eval`, Quelle nur lesend, Teildatei, Sperre. |
-| B. Eigener Benutzer (Änderungsliste M9) | Vorher einen Dienstbenutzer in der Gruppe `Firma` anlegen und prüfen, dass er in `Proxy_Output/mnt/Aufnahmen` schreiben darf. Die Kopie nach `Proxies/` macht das Skript selbst (als root); dafür bräuchte es zusätzlich ein `chown`. |
-
-**Empfehlung: A zum Start.** So wechselt beim Umstieg nur das Skript, nicht zusätzlich die Rechte. B als eigener Schritt danach (offen, siehe Abschnitt 9). Das ist eine bewusste Abweichung von M9 für den Start.
+Die Container laufen als root **mit der Gruppe `Firma`** (`CONTAINER_USER="0:1003"`, Standard im Code seit 25.11.2026). Grund: In der zentralen Ablage gibt es Ordner, deren NFSv4-ACL nur der Gruppe `Firma` Rechte gibt; dort scheiterte root ohne diese Gruppe mit „Permission denied“ (erster Lauf am 24.11.2026). Ein eigener Dienstbenutzer (Änderungsliste M9) bleibt ein späterer Schritt.
 
 ---
 
@@ -66,7 +59,7 @@ Die Datei `leere_proxys.tsv` (Spalten: Gruppe, Proxy, Original) an Claude geben.
 Zeigt, was der Abendlauf tun würde. Ausgabe in eine Datei:
 
 ```bash
-ssh -t mmattausch@192.168.23.8 sudo systemd-run --collect --wait --unit=proxy-v5-trocken -p StandardOutput=file:/mnt/Mirror_2x8TB/Proxy_Output/_protokolle/trocken.txt /usr/bin/bash /mnt/Mirror_2x8TB/Proxy_Output/v5/proxy_v5.sh --trocken
+ssh -t mmattausch@192.168.23.8 sudo systemd-run --collect --wait --unit=proxy-v5-trocken -p StandardOutput=truncate:/mnt/Mirror_2x8TB/Proxy_Output/_protokolle/trocken.txt /usr/bin/bash /mnt/Mirror_2x8TB/Proxy_Output/v5/proxy_v5.sh --trocken
 ```
 
 ```bash
@@ -148,7 +141,7 @@ Nach der Umstellung (Claude formuliert die Einträge, Michl bestätigt):
 
 ## 9. Danach (eigene Schritte)
 
-- **Rechte (M9):** eigener Benutzer für die Container, siehe Entscheidung oben.
+- **Rechte (M9):** eigener Dienstbenutzer für die Container statt root mit Gruppe `Firma`.
 - **Alarm bei Fehlern:** Ob TrueNAS bei Rückgabewert 1 eine E-Mail schickt, hängt von den Einstellungen des Cronjobs ab und ist nicht geprüft. Der vorgesehene Weg ist ein Push an Uptime Kuma; eigener Schritt.
 - **Archivskript in Betrieb nehmen:** Der Code liegt nach Schritt 1 schon unter `v5/archiv_h264.sh`. Statt `find … | xargs -P 3 archiv_h264.sh` gibt es jetzt `--ordner`; es macht dasselbe (drei Dateien gleichzeitig) und läuft als eigene Unit, bricht also beim Ende der SSH-Sitzung nicht ab. Den Ordnerpfad anpassen; der ganze Befehl steht in einfachen Anführungszeichen, damit Leerzeichen im Pfad heil ankommen:
 

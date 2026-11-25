@@ -378,6 +378,8 @@ In `../teambeinert_IT_wissen/docs/entscheidungen.md` bzw. `themen/proxy-und-arch
 
 **Syncthing-Ordner (Beschluss Michl, 24.11.2026, Abweichung von v4):** Ordner mit `.stfolder` (und alles darunter) sind Transport-/Ingest-Ordner; Proxy-Skript und Archivskript überspringen sie mit Grund „Syncthing-Ordner“. Umgesetzt im gemeinsamen Kern (`lib/ablauf.sh`). Tests: Proxy 56 von 56, Archiv 48 von 48. Anlass: Trockenlauf vom 23.11.2026 wollte 418 Dateien im IFAT-Sharefolder rechnen; v4 scheiterte dort seit Mai jeden Abend an „Permission denied“ in der zentralen Ablage.
 
+**Erster Lauf auf ELSA (24.11.2026) und Gruppe Firma (Beschluss Michl, 25.11.2026):** 424 Proxys neu, 37 Fehler (26 ungerade Breite, 4 iPhone, 4 Permission denied, 3 Einzelfälle; Details im Wissens-Repo). Die Container laufen jetzt als root mit Gruppe `Firma` (`CONTAINER_USER="0:1003"`), weil zentrale Ordner mit reiner Firma-ACL root ohne diese Gruppe abweisen. Scheitert das Umbenennen der Teildatei, meldet v5 jetzt `Fehler` statt fälschlich `vorhanden`. Tests: Proxy 56/56, Archiv 48/48.
+
 **Einrichtung:** Anleitung für ELSA in `docs/einrichtung-elsa.md` (Start mit Containern als root wie bisher; M9 als eigener Schritt danach).
 
 **Offen für den nächsten Schritt:** `proxy.bat` und Test am Schnittrechner, `docs/einrichtung-elsa.md`, `docs/anleitung-schnitt.md`.

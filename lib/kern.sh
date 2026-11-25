@@ -261,7 +261,8 @@ platz_reicht() {
 }
 
 # Teildatei unter den endgültigen Namen bringen, ohne ein vorhandenes Ergebnis zu
-# überschreiben. 0 = umbenannt, 1 = Ziel existierte schon mit Inhalt (Teildatei wird gelöscht)
+# überschreiben. 0 = umbenannt, 1 = Ziel existierte schon mit Inhalt (Teildatei wird
+# gelöscht), 3 = Umbenennen gescheitert (z. B. keine Schreibrechte im Ordner)
 teildatei_uebernehmen() {
     local teil="$1" ziel="$2"
     if [ -s "$ziel" ]; then
@@ -271,10 +272,17 @@ teildatei_uebernehmen() {
     # Ein leeres Ziel (0 Byte, Rest eines gescheiterten v4-Laufs) gilt als fehlend und
     # wird durch die geprüfte Teildatei ersetzt (Beschluss Michl, 23.11.2026).
     if [ -e "$ziel" ] && [ ! -s "$ziel" ]; then
-        mv -f -- "$teil" "$ziel"
-        return 0
+        if mv -f -- "$teil" "$ziel"; then
+            return 0
+        fi
+        rm -f -- "$teil"
+        return 3
     fi
-    mv -n -- "$teil" "$ziel"
+    if ! mv -n -- "$teil" "$ziel"; then
+        rm -f -- "$teil"
+        [ -s "$ziel" ] && return 1
+        return 3
+    fi
     if [ -e "$teil" ]; then
         rm -f -- "$teil"
         return 1
@@ -295,8 +303,12 @@ kopieren_ueber_teil() {
         rm -f -- "$teil"
         return 1
     fi
-    teildatei_uebernehmen "$teil" "$ziel" || return 2
-    return 0
+    teildatei_uebernehmen "$teil" "$ziel"
+    case $? in
+        0) return 0 ;;
+        1) return 2 ;;
+        *) return 1 ;;
+    esac
 }
 
 # Reste abgebrochener Läufe löschen: nur eigene Teildateien, die seit mindestens

@@ -205,11 +205,20 @@ umrechnen() {
         return
     fi
 
-    if ! teildatei_uebernehmen "$teil" "$ziel"; then
-        AKTIV_TEIL=""
-        ergebnis vorhanden "inzwischen von anderem Aufruf angelegt" "$ziel"
-        return
-    fi
+    teildatei_uebernehmen "$teil" "$ziel"
+    case $? in
+        0) ;;
+        1)
+            AKTIV_TEIL=""
+            ergebnis vorhanden "inzwischen von anderem Aufruf angelegt" "$ziel"
+            return
+            ;;
+        *)
+            AKTIV_TEIL=""
+            ergebnis Fehler "Umbenennen nach $ziel gescheitert (Schreibrechte im Zielordner?)" "$ziel"
+            return
+            ;;
+    esac
     AKTIV_TEIL=""
     ERGEBNIS="ok"
 }

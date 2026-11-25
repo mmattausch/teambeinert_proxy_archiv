@@ -51,7 +51,7 @@ AUFNAHMEN="/mnt/Aufnahme_mirror/Aufnahmen"
 ZENTRAL="/mnt/Mirror_2x8TB/Proxy_Output/mnt/Aufnahmen"
 PROTOKOLL_ORDNER="/mnt/Mirror_2x8TB/Proxy_Output/_protokolle"
 FFMPEG_IMAGE="linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697"
-CONTAINER_USER=""            # z. B. "<uid>:1003"; leer = Benutzer des Images
+CONTAINER_USER="0:1003"      # root mit Gruppe Firma (Beschluss 25.11.2026); leer = Benutzer des Images
 PARALLEL=3
 ALTER_MIN=120                # Abendlauf: nur Dateien, die so lange unverändert sind
 TOLERANZ_SEKUNDEN=1.0

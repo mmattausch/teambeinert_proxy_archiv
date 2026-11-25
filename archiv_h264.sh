@@ -53,7 +53,7 @@ AUFNAHMEN="/mnt/Aufnahme_mirror/Aufnahmen"
 ZIEL_WURZEL="/mnt/Aufnahme_mirror/Aufnahmen/00_to_Backup/h264_archiv"
 PROTOKOLL_ORDNER=""          # leer = <ZIEL_WURZEL>/_protokolle
 FFMPEG_IMAGE="linuxserver/ffmpeg@sha256:784db915924daf9081ab57b46b91d37610c60da5d9600ffd9855c7568fadc697"
-CONTAINER_USER=""            # z. B. "<uid>:1003"; leer = Benutzer des Images
+CONTAINER_USER="0:1003"      # root mit Gruppe Firma (Beschluss 25.11.2026); leer = Benutzer des Images
 PARALLEL=3                   # wie der bisherige Aufruf mit xargs -P 3
 TOLERANZ_SEKUNDEN=1.0        # TOLERANZ_SEKUNDEN aus M3
 RESERVE_BYTE=$((50 * 1024 * 1024 * 1024))
